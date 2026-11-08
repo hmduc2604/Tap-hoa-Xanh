@@ -1,0 +1,820 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "auth-service — hợp đồng dịch vụ",
+    "version": "1.0.0",
+    "description": "Quản lý người dùng, xác thực JWT, sổ địa chỉ và phân quyền",
+    "x-service-name": "auth-service",
+    "x-service-layer": "entity"
+  },
+  "servers": [
+    {
+      "url": "/"
+    }
+  ],
+  "tags": [
+    {
+      "name": "auth"
+    },
+    {
+      "name": "internal"
+    },
+    {
+      "name": "operations"
+    },
+    {
+      "name": "users"
+    }
+  ],
+  "paths": {
+    "/api/auth/change-password": {
+      "put": {
+        "operationId": "change_password",
+        "summary": "Đổi mật khẩu",
+        "tags": [
+          "auth"
+        ],
+        "responses": {
+          "200": {
+            "description": "Thành công",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "$ref": "#/components/responses/ClientError"
+          }
+        },
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-access": "authenticated"
+      }
+    },
+    "/api/auth/login": {
+      "post": {
+        "operationId": "login",
+        "summary": "Đăng nhập bằng email và mật khẩu, trả về JWT",
+        "tags": [
+          "auth"
+        ],
+        "responses": {
+          "200": {
+            "description": "Thành công",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Tạo thành công",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "$ref": "#/components/responses/ClientError"
+          }
+        },
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "security": [],
+        "x-access": "public"
+      }
+    },
+    "/api/auth/me": {
+      "get": {
+        "operationId": "me",
+        "summary": "Xem hồ sơ người dùng hiện tại",
+        "tags": [
+          "auth"
+        ],
+        "responses": {
+          "200": {
+            "description": "Thành công",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "$ref": "#/components/responses/ClientError"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-access": "authenticated"
+      },
+      "put": {
+        "operationId": "update_me",
+        "summary": "Cập nhật họ tên, số điện thoại (trả về token mới)",
+        "tags": [
+          "auth"
+        ],
+        "responses": {
+          "200": {
+            "description": "Thành công",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "$ref": "#/components/responses/ClientError"
+          }
+        },
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-access": "authenticated"
+      }
+    },
+    "/api/auth/register": {
+      "post": {
+        "operationId": "register",
+        "summary": "Đăng ký tài khoản khách hàng, trả về JWT",
+        "tags": [
+          "auth"
+        ],
+        "responses": {
+          "200": {
+            "description": "Thành công",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Tạo thành công",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "$ref": "#/components/responses/ClientError"
+          }
+        },
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "security": [],
+        "x-access": "public"
+      }
+    },
+    "/api/users": {
+      "get": {
+        "operationId": "list_users",
+        "summary": "Danh sách người dùng (tìm kiếm, lọc vai trò)",
+        "tags": [
+          "users"
+        ],
+        "responses": {
+          "200": {
+            "description": "Thành công",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "$ref": "#/components/responses/ClientError"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-access": "roles:admin,staff",
+        "description": "Vai trò được phép: admin, staff"
+      },
+      "post": {
+        "operationId": "admin_create_user",
+        "summary": "Tạo tài khoản nhân viên / quản trị",
+        "tags": [
+          "users"
+        ],
+        "responses": {
+          "200": {
+            "description": "Thành công",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Tạo thành công",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "$ref": "#/components/responses/ClientError"
+          }
+        },
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-access": "roles:admin",
+        "description": "Vai trò được phép: admin"
+      }
+    },
+    "/api/users/{user_id}": {
+      "get": {
+        "operationId": "admin_get_user",
+        "summary": "Chi tiết người dùng kèm địa chỉ",
+        "tags": [
+          "users"
+        ],
+        "responses": {
+          "200": {
+            "description": "Thành công",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "$ref": "#/components/responses/ClientError"
+          }
+        },
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-access": "roles:admin,staff",
+        "description": "Vai trò được phép: admin, staff"
+      },
+      "put": {
+        "operationId": "admin_update_user",
+        "summary": "Đổi vai trò, khóa tài khoản, đặt lại mật khẩu",
+        "tags": [
+          "users"
+        ],
+        "responses": {
+          "200": {
+            "description": "Thành công",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "$ref": "#/components/responses/ClientError"
+          }
+        },
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-access": "roles:admin",
+        "description": "Vai trò được phép: admin"
+      }
+    },
+    "/api/users/me/addresses": {
+      "get": {
+        "operationId": "list_addresses",
+        "summary": "Danh sách địa chỉ giao hàng của tôi",
+        "tags": [
+          "users"
+        ],
+        "responses": {
+          "200": {
+            "description": "Thành công",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "$ref": "#/components/responses/ClientError"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-access": "authenticated"
+      },
+      "post": {
+        "operationId": "add_address",
+        "summary": "Thêm địa chỉ giao hàng",
+        "tags": [
+          "users"
+        ],
+        "responses": {
+          "200": {
+            "description": "Thành công",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Tạo thành công",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "$ref": "#/components/responses/ClientError"
+          }
+        },
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-access": "authenticated"
+      }
+    },
+    "/api/users/me/addresses/{addr_id}": {
+      "put": {
+        "operationId": "update_address",
+        "summary": "Sửa địa chỉ giao hàng",
+        "tags": [
+          "users"
+        ],
+        "responses": {
+          "200": {
+            "description": "Thành công",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "$ref": "#/components/responses/ClientError"
+          }
+        },
+        "parameters": [
+          {
+            "name": "addr_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-access": "authenticated"
+      },
+      "delete": {
+        "operationId": "delete_address",
+        "summary": "Xóa địa chỉ giao hàng",
+        "tags": [
+          "users"
+        ],
+        "responses": {
+          "200": {
+            "description": "Thành công",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "$ref": "#/components/responses/ClientError"
+          }
+        },
+        "parameters": [
+          {
+            "name": "addr_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-access": "authenticated"
+      }
+    },
+    "/contract": {
+      "get": {
+        "operationId": "_contract",
+        "summary": "Hợp đồng dịch vụ OpenAPI 3 (?public=1 để bỏ các API nội bộ)",
+        "tags": [
+          "operations"
+        ],
+        "responses": {
+          "200": {
+            "description": "Thành công",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "$ref": "#/components/responses/ClientError"
+          }
+        },
+        "security": [],
+        "x-access": "public"
+      }
+    },
+    "/health": {
+      "get": {
+        "operationId": "_health",
+        "summary": "Kiểm tra trạng thái service và kết nối CSDL",
+        "tags": [
+          "operations"
+        ],
+        "responses": {
+          "200": {
+            "description": "Thành công",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "$ref": "#/components/responses/ClientError"
+          }
+        },
+        "security": [],
+        "x-access": "public"
+      }
+    },
+    "/internal/users": {
+      "get": {
+        "operationId": "internal_users",
+        "summary": "Lấy nhiều người dùng theo danh sách id",
+        "tags": [
+          "internal"
+        ],
+        "responses": {
+          "200": {
+            "description": "Thành công",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "$ref": "#/components/responses/ClientError"
+          }
+        },
+        "security": [
+          {
+            "internalToken": []
+          }
+        ],
+        "x-access": "internal"
+      }
+    },
+    "/internal/users/{user_id}": {
+      "get": {
+        "operationId": "internal_get_user",
+        "summary": "Lấy thông tin người dùng theo id",
+        "tags": [
+          "internal"
+        ],
+        "responses": {
+          "200": {
+            "description": "Thành công",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "$ref": "#/components/responses/ClientError"
+          }
+        },
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "security": [
+          {
+            "internalToken": []
+          }
+        ],
+        "x-access": "internal"
+      }
+    },
+    "/internal/users/{user_id}/addresses/{addr_id}": {
+      "get": {
+        "operationId": "internal_get_address",
+        "summary": "Lấy một địa chỉ giao hàng của người dùng",
+        "tags": [
+          "internal"
+        ],
+        "responses": {
+          "200": {
+            "description": "Thành công",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "$ref": "#/components/responses/ClientError"
+          }
+        },
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "addr_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "security": [
+          {
+            "internalToken": []
+          }
+        ],
+        "x-access": "internal"
+      }
+    },
+    "/internal/users/stats": {
+      "get": {
+        "operationId": "internal_stats",
+        "summary": "Thống kê số người dùng theo vai trò",
+        "tags": [
+          "internal"
+        ],
+        "responses": {
+          "200": {
+            "description": "Thành công",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "$ref": "#/components/responses/ClientError"
+          }
+        },
+        "security": [
+          {
+            "internalToken": []
+          }
+        ],
+        "x-access": "internal"
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "JWT do auth-service phát hành, kiểm tra tại API Gateway"
+      },
+      "internalToken": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-Internal-Token",
+        "description": "Khóa nội bộ cho lời gọi service-to-service"
+      }
+    },
+    "schemas": {
+      "Error": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string",
+                "example": "OUT_OF_STOCK"
+              },
+              "message": {
+                "type": "string",
+                "example": "Không đủ hàng: Pate gan Hạ Long 150g (còn 0)"
+              },
+              "details": {}
+            },
+            "required": [
+              "code",
+              "message"
+            ]
+          }
+        }
+      }
+    },
+    "responses": {
+      "ClientError": {
+        "description": "Lỗi phía client (400, 401, 403, 404, 409...)",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      }
+    }
+  }
+}

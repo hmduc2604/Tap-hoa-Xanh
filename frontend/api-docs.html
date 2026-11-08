@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Hợp đồng dịch vụ — Tạp Hóa Xanh</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧺</text></svg>">
+  <link rel="stylesheet" href="/assets/css/base.css">
+  <link rel="stylesheet" href="/assets/css/store.css">
+  <style>
+    .docs { display: grid; grid-template-columns: 280px 1fr; gap: 1.6rem; align-items: start; }
+    .svc-list { position: sticky; top: 92px; display: grid; gap: 1rem; }
+    .svc-list h3 { font-size: 1rem; margin: 0 0 .35rem; color: var(--muted); font-family: var(--font-body); font-weight: 600; }
+    .svc-list button { display: flex; justify-content: space-between; align-items: center; width: 100%; text-align: left; border: 1.5px solid var(--line);
+      background: #fff; border-radius: var(--r-sm); padding: .55rem .7rem; font: 600 .9rem var(--font-body); color: var(--ink); cursor: pointer; margin-bottom: .35rem; }
+    .svc-list button[aria-pressed=true] { border-color: var(--leaf); background: var(--leaf-soft); }
+    .svc-list .n { color: var(--muted); font-weight: 500; font-size: .8rem; }
+    .op { display: grid; grid-template-columns: 70px 1fr auto; gap: .2rem .8rem; align-items: baseline; padding: .6rem .2rem; border-bottom: 1px solid #EEF2EC; }
+    .op:last-child { border-bottom: 0; }
+    .verb { font: 700 .78rem var(--font-body); padding: .2rem .4rem; border-radius: 4px; text-align: center; color: #fff; }
+    .verb.get { background: var(--sky); } .verb.post { background: var(--leaf); } .verb.put { background: var(--amber); } .verb.delete { background: var(--chili); }
+    .op code { font-size: .88rem; word-break: break-all; }
+    .op .sum { grid-column: 2 / -1; color: var(--muted); font-size: .88rem; }
+    .access { font-size: .74rem; font-weight: 600; padding: .15rem .5rem; border-radius: 999px; background: var(--leaf-soft); color: var(--leaf-deep); white-space: nowrap; }
+    .access.authenticated { background: var(--sky-soft); color: var(--sky); }
+    .access.roles { background: var(--tag-soft); color: #8a6a00; }
+    pre.xml { background: var(--leaf-deep); color: #E9F4EB; padding: 1rem; border-radius: var(--r-md); overflow: auto; font-size: .8rem; max-height: 340px; white-space: pre-wrap; }
+    .tag-group h3 { margin: 1.1rem 0 .3rem; font-size: 1.1rem; }
+    .meta-row { display: flex; gap: .5rem; flex-wrap: wrap; align-items: center; margin-bottom: .8rem; }
+    @media (max-width: 860px) { .docs { grid-template-columns: 1fr; } .svc-list { position: static; } }
+  </style>
+</head>
+<body>
+  <main class="wrap page">
+    <div class="page-title"><h1>Hợp đồng dịch vụ</h1>
+      <span class="muted">Danh mục dịch vụ (service inventory) và hợp đồng OpenAPI 3 / WSDL, sinh trực tiếp từ code</span></div>
+    <div class="docs">
+      <aside class="svc-list" id="svc-list"><div class="spinner"></div></aside>
+      <section id="contract" class="panel"><div class="spinner"></div></section>
+    </div>
+  </main>
+  <script src="/assets/js/core.js"></script>
+  <script src="/assets/js/shop.js"></script>
+  <script>
+    renderShell('docs');
+    const LAYER = { task: 'Task service — điều phối quy trình', entity: 'Entity service — thực thể nghiệp vụ', utility: 'Utility service — hạ tầng dùng chung', integration: 'Tầng tích hợp (ESB)' };
+    const ACCESS = { public: 'Công khai', authenticated: 'Cần đăng nhập' };
+    let services = [];
+
+    const SOAP_SAMPLE = `<?xml version="1.0" encoding="utf-8"?>
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:c="urn:taphoaxanh:catalog:v1">
+  <soap:Body>
+    <c:SearchProducts>
+      <c:keyword>nuoc mam</c:keyword>
+      <c:pageSize>3</c:pageSize>
+    </c:SearchProducts>
+  </soap:Body>
+</soap:Envelope>`;
+
+    function accessBadge(op) {
+      const a = op['x-access'] || 'public';
+      if (a.startsWith('roles:')) return `<span class="access roles">Vai trò: ${esc(a.slice(6).replace(',', ', '))}</span>`;
+      return `<span class="access ${a}">${ACCESS[a] || a}</span>`;
+    }
+
+    async function show(name) {
+      qsa('#svc-list button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.s === name)));
+      const box = qs('#contract');
+      box.innerHTML = '<div class="spinner"></div>';
+      try {
+        const doc = await api(`/contracts/${name}`);
+        const info = services.find((s) => s.openapi.endsWith('/' + name)) || {};
+        const groups = {};
+        Object.entries(doc.paths).forEach(([path, ops]) => Object.entries(ops).forEach(([verb, op]) => {
+          (groups[op.tags[0]] = groups[op.tags[0]] || []).push({ path, verb, op });
+        }));
+        const count = Object.values(groups).reduce((n, g) => n + g.length, 0);
+        box.innerHTML = `
+          <h2 style="margin-bottom:.3rem">${esc(doc.info.title)}</h2>
+          <p class="muted">${esc(doc.info.description || '')}</p>
+          <div class="meta-row">${pill('CONFIRMED', LAYER[doc.info['x-service-layer']] || doc.info['x-service-layer'])}
+            ${pill('DELIVERED', 'Phiên bản ' + esc(doc.info.version))} <span class="muted small">${count} thao tác · OpenAPI ${esc(doc.openapi)}</span>
+            <a class="btn secondary sm" href="${API_BASE}/contracts/${name}" target="_blank" rel="noopener">Tải JSON</a></div>
+          ${Object.entries(groups).map(([tag, ops]) => `<div class="tag-group"><h3>${esc(tag)}</h3>
+            ${ops.map(({ path, verb, op }) => `<div class="op"><span class="verb ${verb}">${verb.toUpperCase()}</span><code>${esc(path)}</code>${accessBadge(op)}
+              <span class="sum">${esc(op.summary)}</span></div>`).join('')}</div>`).join('')}
+          ${info.wsdl ? `<div class="tag-group"><h3>SOAP: CatalogService</h3>
+            <p class="small">Gateway đóng vai trò ESB: nhận SOAP 1.1, chuyển thành REST tới product-service rồi biến đổi JSON thành XML theo WSDL.
+              Thao tác: GetCategories, SearchProducts, GetProduct.</p>
+            <p><a class="btn secondary sm" href="${API_BASE}/soap/catalog?wsdl" target="_blank" rel="noopener">Xem WSDL</a></p>
+            <label class="field">SOAP request<textarea id="soap-req" rows="10" style="font-family:Consolas,monospace;font-size:.82rem">${esc(SOAP_SAMPLE)}</textarea></label>
+            <p style="margin-top:.6rem"><button class="btn" id="soap-send">Gửi SOAP request</button></p>
+            <pre class="xml hidden" id="soap-res"></pre></div>` : ''}`;
+        const send = qs('#soap-send');
+        if (send) send.addEventListener('click', async () => {
+          setBusy(send, true, 'Đang gọi…');
+          try {
+            const res = await fetch(`${API_BASE}/soap/catalog`, { method: 'POST', headers: { 'Content-Type': 'text/xml; charset=utf-8' }, body: qs('#soap-req').value });
+            const text = await res.text();
+            const out = qs('#soap-res');
+            out.textContent = `HTTP ${res.status}\n\n` + text.replace(/></g, '>\n<');
+            out.classList.remove('hidden');
+          } catch (e) { toastError(e); } finally { setBusy(send, false); }
+        });
+      } catch (e) { box.innerHTML = `<div class="empty"><strong>Không tải được hợp đồng</strong>${esc(e.message)}</div>`; }
+    }
+
+    (async () => {
+      try {
+        const data = await api('/contracts');
+        services = data.items;
+        const byLayer = {};
+        services.forEach((s) => { (byLayer[s.layer || 'entity'] = byLayer[s.layer || 'entity'] || []).push(s); });
+        qs('#svc-list').innerHTML = ['task', 'entity', 'utility', 'integration'].filter((l) => byLayer[l]).map((l) => `
+          <div><h3>${LAYER[l]}</h3>${byLayer[l].map((s) => {
+            const key = s.openapi.split('/').pop();
+            return `<button data-s="${key}" aria-pressed="false"><span>${esc(s.service)}</span><span class="n">${s.instances_up} instance</span></button>`;
+          }).join('')}</div>`).join('') +
+          (data.registry_available ? '' : '<p class="note-err">Không liên lạc được Service Registry</p>');
+        qs('#svc-list').addEventListener('click', (e) => { const b = e.target.closest('[data-s]'); if (b) show(b.dataset.s); });
+        show(param('service') || 'order');
+      } catch (e) { qs('#svc-list').innerHTML = `<p class="note-err">${esc(e.message)}</p>`; }
+    })();
+  </script>
+</body>
+</html>

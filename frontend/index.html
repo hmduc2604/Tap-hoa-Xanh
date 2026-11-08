@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tạp Hóa Xanh — đi chợ online</title>
+  <meta name="description" content="Tạp hóa gần nhà: gạo, mì, gia vị, sữa, rau củ tươi. Đặt online, giao trong 2 giờ.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧺</text></svg>">
+  <link rel="stylesheet" href="/assets/css/base.css">
+  <link rel="stylesheet" href="/assets/css/store.css">
+</head>
+<body>
+  <main class="wrap">
+    <section class="hero">
+      <div>
+        <h1>Đi chợ không cần ra chợ</h1>
+        <p class="lead">Hơn 50 mặt hàng thiết yếu từ gạo, nước mắm đến rau củ trong ngày. Đặt trước 20:00, giao trong 2 giờ.</p>
+        <div class="actions">
+          <a class="btn lg" href="#catalog">Xem hàng trên kệ</a>
+          <a class="btn lg secondary" href="#" id="sale-link">Đang giảm giá</a>
+        </div>
+      </div>
+      <aside class="deals" aria-labelledby="deals-title">
+        <h2 id="deals-title">Giảm giá hôm nay <a href="#" id="all-deals">Xem tất cả</a></h2>
+        <div id="deals"><div class="spinner"></div></div>
+      </aside>
+    </section>
+
+    <section aria-label="Mã giảm giá" id="coupon-section" class="hidden" style="margin-bottom:1.4rem">
+      <div class="coupons" id="coupons"></div>
+    </section>
+
+    <nav class="shelf" id="shelf" aria-label="Danh mục"></nav>
+
+    <section class="catalog" id="catalog">
+      <aside class="filters" aria-label="Bộ lọc">
+        <div>
+          <h3>Khoảng giá</h3>
+          <div class="range">
+            <input type="number" id="min-price" placeholder="Từ" min="0" step="1000" aria-label="Giá từ">
+            <input type="number" id="max-price" placeholder="Đến" min="0" step="1000" aria-label="Giá đến">
+          </div>
+        </div>
+        <div>
+          <h3>Ưu đãi</h3>
+          <label class="check"><input type="checkbox" id="on-sale"> Chỉ hàng giảm giá</label>
+        </div>
+        <button class="btn secondary" id="apply-filter">Lọc sản phẩm</button>
+      </aside>
+      <div>
+        <div class="catalog-head">
+          <h2 id="catalog-title">Tất cả sản phẩm</h2>
+          <label class="check">Sắp xếp
+            <select id="sort">
+              <option value="popular">Bán chạy</option>
+              <option value="newest">Mới nhất</option>
+              <option value="price_asc">Giá thấp đến cao</option>
+              <option value="price_desc">Giá cao đến thấp</option>
+              <option value="discount">Giảm nhiều nhất</option>
+              <option value="rating">Đánh giá cao</option>
+              <option value="name">Tên A–Z</option>
+            </select>
+          </label>
+        </div>
+        <p class="muted small hidden" id="stock-warning">Không lấy được tồn kho lúc này, số lượng còn lại sẽ được kiểm tra khi đặt hàng.</p>
+        <div class="grid" id="grid"></div>
+        <nav class="pager" id="pager" aria-label="Phân trang"></nav>
+      </div>
+    </section>
+  </main>
+
+  <script src="/assets/js/core.js"></script>
+  <script src="/assets/js/shop.js"></script>
+  <script src="/assets/js/home.js"></script>
+</body>
+</html>

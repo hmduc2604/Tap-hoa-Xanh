@@ -1,0 +1,5 @@
+# Lưu mọi file văn bản với LF để Dockerfile / script chạy đúng trong container Linux
+* text=auto eol=lf
+*.pptx binary
+*.png binary
+*.jpg binary

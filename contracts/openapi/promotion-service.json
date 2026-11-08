@@ -1,0 +1,570 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "promotion-service — hợp đồng dịch vụ",
+    "version": "1.0.0",
+    "description": "Mã giảm giá và lượt sử dụng",
+    "x-service-name": "promotion-service",
+    "x-service-layer": "entity"
+  },
+  "servers": [
+    {
+      "url": "/"
+    }
+  ],
+  "tags": [
+    {
+      "name": "coupons"
+    },
+    {
+      "name": "internal"
+    },
+    {
+      "name": "operations"
+    }
+  ],
+  "paths": {
+    "/api/coupons": {
+      "get": {
+        "operationId": "list_coupons",
+        "summary": "Danh sách mã giảm giá",
+        "tags": [
+          "coupons"
+        ],
+        "responses": {
+          "200": {
+            "description": "Thành công",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "$ref": "#/components/responses/ClientError"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-access": "roles:admin,staff",
+        "description": "Vai trò được phép: admin, staff"
+      },
+      "post": {
+        "operationId": "create_coupon",
+        "summary": "Tạo mã giảm giá",
+        "tags": [
+          "coupons"
+        ],
+        "responses": {
+          "200": {
+            "description": "Thành công",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Tạo thành công",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "$ref": "#/components/responses/ClientError"
+          }
+        },
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-access": "roles:admin,staff",
+        "description": "Vai trò được phép: admin, staff"
+      }
+    },
+    "/api/coupons/{cid}": {
+      "put": {
+        "operationId": "update_coupon",
+        "summary": "Sửa mã giảm giá",
+        "tags": [
+          "coupons"
+        ],
+        "responses": {
+          "200": {
+            "description": "Thành công",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "$ref": "#/components/responses/ClientError"
+          }
+        },
+        "parameters": [
+          {
+            "name": "cid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-access": "roles:admin,staff",
+        "description": "Vai trò được phép: admin, staff"
+      },
+      "delete": {
+        "operationId": "delete_coupon",
+        "summary": "Xóa mã (mã đã dùng sẽ bị tắt)",
+        "tags": [
+          "coupons"
+        ],
+        "responses": {
+          "200": {
+            "description": "Thành công",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "$ref": "#/components/responses/ClientError"
+          }
+        },
+        "parameters": [
+          {
+            "name": "cid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-access": "roles:admin,staff",
+        "description": "Vai trò được phép: admin, staff"
+      }
+    },
+    "/api/coupons/{cid}/usages": {
+      "get": {
+        "operationId": "coupon_usages",
+        "summary": "Lượt sử dụng của một mã",
+        "tags": [
+          "coupons"
+        ],
+        "responses": {
+          "200": {
+            "description": "Thành công",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "$ref": "#/components/responses/ClientError"
+          }
+        },
+        "parameters": [
+          {
+            "name": "cid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-access": "roles:admin,staff",
+        "description": "Vai trò được phép: admin, staff"
+      }
+    },
+    "/api/coupons/available": {
+      "get": {
+        "operationId": "available_coupons",
+        "summary": "Mã giảm giá công khai đang hiệu lực",
+        "tags": [
+          "coupons"
+        ],
+        "responses": {
+          "200": {
+            "description": "Thành công",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "$ref": "#/components/responses/ClientError"
+          }
+        },
+        "security": [],
+        "x-access": "public"
+      }
+    },
+    "/api/coupons/validate": {
+      "post": {
+        "operationId": "validate_coupon",
+        "summary": "Kiểm tra mã và tính số tiền giảm",
+        "tags": [
+          "coupons"
+        ],
+        "responses": {
+          "200": {
+            "description": "Thành công",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Tạo thành công",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "$ref": "#/components/responses/ClientError"
+          }
+        },
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-access": "authenticated"
+      }
+    },
+    "/contract": {
+      "get": {
+        "operationId": "_contract",
+        "summary": "Hợp đồng dịch vụ OpenAPI 3 (?public=1 để bỏ các API nội bộ)",
+        "tags": [
+          "operations"
+        ],
+        "responses": {
+          "200": {
+            "description": "Thành công",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "$ref": "#/components/responses/ClientError"
+          }
+        },
+        "security": [],
+        "x-access": "public"
+      }
+    },
+    "/health": {
+      "get": {
+        "operationId": "_health",
+        "summary": "Kiểm tra trạng thái service và kết nối CSDL",
+        "tags": [
+          "operations"
+        ],
+        "responses": {
+          "200": {
+            "description": "Thành công",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "$ref": "#/components/responses/ClientError"
+          }
+        },
+        "security": [],
+        "x-access": "public"
+      }
+    },
+    "/internal/coupons/redeem": {
+      "post": {
+        "operationId": "internal_redeem",
+        "summary": "Ghi nhận lượt dùng mã cho đơn hàng (idempotent theo order_id).",
+        "tags": [
+          "internal"
+        ],
+        "responses": {
+          "200": {
+            "description": "Thành công",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Tạo thành công",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "$ref": "#/components/responses/ClientError"
+          }
+        },
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "internalToken": []
+          }
+        ],
+        "x-access": "internal"
+      }
+    },
+    "/internal/coupons/release": {
+      "post": {
+        "operationId": "internal_release",
+        "summary": "Compensation: hoàn lại lượt dùng mã khi đơn bị hủy.",
+        "tags": [
+          "internal"
+        ],
+        "responses": {
+          "200": {
+            "description": "Thành công",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Tạo thành công",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "$ref": "#/components/responses/ClientError"
+          }
+        },
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "internalToken": []
+          }
+        ],
+        "x-access": "internal"
+      }
+    },
+    "/internal/coupons/validate": {
+      "post": {
+        "operationId": "internal_validate",
+        "summary": "Kiểm tra mã giảm giá cho đơn hàng",
+        "tags": [
+          "internal"
+        ],
+        "responses": {
+          "200": {
+            "description": "Thành công",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Tạo thành công",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "$ref": "#/components/responses/ClientError"
+          }
+        },
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "internalToken": []
+          }
+        ],
+        "x-access": "internal"
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "JWT do auth-service phát hành, kiểm tra tại API Gateway"
+      },
+      "internalToken": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-Internal-Token",
+        "description": "Khóa nội bộ cho lời gọi service-to-service"
+      }
+    },
+    "schemas": {
+      "Error": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string",
+                "example": "OUT_OF_STOCK"
+              },
+              "message": {
+                "type": "string",
+                "example": "Không đủ hàng: Pate gan Hạ Long 150g (còn 0)"
+              },
+              "details": {}
+            },
+            "required": [
+              "code",
+              "message"
+            ]
+          }
+        }
+      }
+    },
+    "responses": {
+      "ClientError": {
+        "description": "Lỗi phía client (400, 401, 403, 404, 409...)",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      }
+    }
+  }
+}

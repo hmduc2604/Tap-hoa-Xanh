@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Quản trị — Tạp Hóa Xanh</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧺</text></svg>">
+  <link rel="stylesheet" href="/assets/css/base.css">
+  <link rel="stylesheet" href="/assets/css/store.css">
+  <link rel="stylesheet" href="/assets/css/admin.css">
+</head>
+<body>
+  <div class="admin">
+    <nav class="side" aria-label="Quản trị">
+      <a class="brand" href="/admin/"><b>TẠP HÓA XANH</b><span>Quản lý cửa hàng</span></a>
+      <a class="nav" href="#dashboard">📊 Tổng quan</a>
+      <div class="group">Bán hàng</div>
+      <a class="nav" href="#orders">📦 Đơn hàng <span class="badge hidden" id="pending-badge"></span></a>
+      <a class="nav" href="#pos">🧾 Bán tại quầy</a>
+      <a class="nav" href="#payments">💳 Thanh toán</a>
+      <div class="group">Hàng hóa</div>
+      <a class="nav" href="#products">🏷️ Sản phẩm</a>
+      <a class="nav" href="#categories">🗂️ Danh mục</a>
+      <a class="nav" href="#inventory">🏬 Kho hàng</a>
+      <a class="nav" href="#receipts">📥 Nhập hàng</a>
+      <a class="nav" href="#suppliers">🚚 Nhà cung cấp</a>
+      <div class="group">Khách hàng</div>
+      <a class="nav" href="#coupons">🎟️ Mã giảm giá</a>
+      <a class="nav admin-only" href="#users">👥 Người dùng</a>
+      <div class="group">Hệ thống</div>
+      <a class="nav" href="#notifications">🔔 Thông báo <span class="badge red hidden" id="notif-badge"></span></a>
+      <a class="nav admin-only" href="#emails">✉️ Email đã gửi</a>
+      <a class="nav" href="#system">🩺 Trạng thái dịch vụ</a>
+      <div class="me" id="me"></div>
+    </nav>
+    <main class="main" id="view" tabindex="-1"></main>
+  </div>
+  <script src="/assets/js/core.js"></script>
+  <script src="/assets/js/admin.js"></script>
+</body>
+</html>

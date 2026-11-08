@@ -1,0 +1,621 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "order-service — hợp đồng dịch vụ",
+    "version": "1.0.0",
+    "description": "Điều phối quy trình đặt hàng (Saga), bán tại quầy và báo cáo doanh thu",
+    "x-service-name": "order-service",
+    "x-service-layer": "task"
+  },
+  "servers": [
+    {
+      "url": "/"
+    }
+  ],
+  "tags": [
+    {
+      "name": "internal"
+    },
+    {
+      "name": "operations"
+    },
+    {
+      "name": "orders"
+    },
+    {
+      "name": "pos"
+    },
+    {
+      "name": "reports"
+    }
+  ],
+  "paths": {
+    "/api/orders": {
+      "post": {
+        "operationId": "checkout",
+        "summary": "Đặt hàng online (Saga: giữ hàng, ghi nhận mã, tạo thanh toán)",
+        "tags": [
+          "orders"
+        ],
+        "responses": {
+          "200": {
+            "description": "Thành công",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Tạo thành công",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "$ref": "#/components/responses/ClientError"
+          }
+        },
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-access": "authenticated"
+      },
+      "get": {
+        "operationId": "list_orders",
+        "summary": "Quản lý đơn hàng (lọc trạng thái, kênh, ngày)",
+        "tags": [
+          "orders"
+        ],
+        "responses": {
+          "200": {
+            "description": "Thành công",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "$ref": "#/components/responses/ClientError"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-access": "roles:admin,staff",
+        "description": "Vai trò được phép: admin, staff"
+      }
+    },
+    "/api/orders/{order_id}": {
+      "get": {
+        "operationId": "order_detail",
+        "summary": "Chi tiết đơn hàng, lịch sử và thanh toán",
+        "tags": [
+          "orders"
+        ],
+        "responses": {
+          "200": {
+            "description": "Thành công",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "$ref": "#/components/responses/ClientError"
+          }
+        },
+        "parameters": [
+          {
+            "name": "order_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-access": "authenticated"
+      }
+    },
+    "/api/orders/{order_id}/cancel": {
+      "post": {
+        "operationId": "customer_cancel",
+        "summary": "Hủy đơn (trả hàng, hủy / hoàn tiền, hoàn lượt mã)",
+        "tags": [
+          "orders"
+        ],
+        "responses": {
+          "200": {
+            "description": "Thành công",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Tạo thành công",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "$ref": "#/components/responses/ClientError"
+          }
+        },
+        "parameters": [
+          {
+            "name": "order_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-access": "authenticated"
+      }
+    },
+    "/api/orders/{order_id}/status": {
+      "put": {
+        "operationId": "update_status",
+        "summary": "Chuyển trạng thái đơn: xác nhận, giao, đã giao, hủy",
+        "tags": [
+          "orders"
+        ],
+        "responses": {
+          "200": {
+            "description": "Thành công",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "$ref": "#/components/responses/ClientError"
+          }
+        },
+        "parameters": [
+          {
+            "name": "order_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-access": "roles:admin,staff",
+        "description": "Vai trò được phép: admin, staff"
+      }
+    },
+    "/api/orders/my": {
+      "get": {
+        "operationId": "my_orders",
+        "summary": "Đơn hàng của tôi",
+        "tags": [
+          "orders"
+        ],
+        "responses": {
+          "200": {
+            "description": "Thành công",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "$ref": "#/components/responses/ClientError"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-access": "authenticated"
+      }
+    },
+    "/api/orders/preview": {
+      "post": {
+        "operationId": "checkout_preview",
+        "summary": "Tính trước tạm tính / giảm giá / phí ship (không tạo đơn).",
+        "tags": [
+          "orders"
+        ],
+        "responses": {
+          "200": {
+            "description": "Thành công",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Tạo thành công",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "$ref": "#/components/responses/ClientError"
+          }
+        },
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-access": "authenticated"
+      }
+    },
+    "/api/pos/orders": {
+      "post": {
+        "operationId": "pos_checkout",
+        "summary": "Bán tại quầy: thanh toán và xuất kho ngay",
+        "tags": [
+          "pos"
+        ],
+        "responses": {
+          "200": {
+            "description": "Thành công",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Tạo thành công",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "$ref": "#/components/responses/ClientError"
+          }
+        },
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-access": "roles:admin,staff",
+        "description": "Vai trò được phép: admin, staff"
+      }
+    },
+    "/api/reports/summary": {
+      "get": {
+        "operationId": "report_summary",
+        "summary": "Báo cáo doanh thu theo khoảng ngày",
+        "tags": [
+          "reports"
+        ],
+        "responses": {
+          "200": {
+            "description": "Thành công",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "$ref": "#/components/responses/ClientError"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-access": "roles:admin,staff",
+        "description": "Vai trò được phép: admin, staff"
+      }
+    },
+    "/contract": {
+      "get": {
+        "operationId": "_contract",
+        "summary": "Hợp đồng dịch vụ OpenAPI 3 (?public=1 để bỏ các API nội bộ)",
+        "tags": [
+          "operations"
+        ],
+        "responses": {
+          "200": {
+            "description": "Thành công",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "$ref": "#/components/responses/ClientError"
+          }
+        },
+        "security": [],
+        "x-access": "public"
+      }
+    },
+    "/health": {
+      "get": {
+        "operationId": "_health",
+        "summary": "Kiểm tra trạng thái service và kết nối CSDL",
+        "tags": [
+          "operations"
+        ],
+        "responses": {
+          "200": {
+            "description": "Thành công",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "$ref": "#/components/responses/ClientError"
+          }
+        },
+        "security": [],
+        "x-access": "public"
+      }
+    },
+    "/internal/orders/purchased": {
+      "get": {
+        "operationId": "internal_purchased",
+        "summary": "Khách đã mua và nhận sản phẩm này chưa",
+        "tags": [
+          "internal"
+        ],
+        "responses": {
+          "200": {
+            "description": "Thành công",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "$ref": "#/components/responses/ClientError"
+          }
+        },
+        "security": [
+          {
+            "internalToken": []
+          }
+        ],
+        "x-access": "internal"
+      }
+    },
+    "/internal/orders/recent": {
+      "get": {
+        "operationId": "internal_recent",
+        "summary": "Các đơn hàng gần nhất",
+        "tags": [
+          "internal"
+        ],
+        "responses": {
+          "200": {
+            "description": "Thành công",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "$ref": "#/components/responses/ClientError"
+          }
+        },
+        "security": [
+          {
+            "internalToken": []
+          }
+        ],
+        "x-access": "internal"
+      }
+    },
+    "/internal/orders/report": {
+      "get": {
+        "operationId": "internal_report",
+        "summary": "Báo cáo doanh thu (cho dashboard)",
+        "tags": [
+          "internal"
+        ],
+        "responses": {
+          "200": {
+            "description": "Thành công",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "$ref": "#/components/responses/ClientError"
+          }
+        },
+        "security": [
+          {
+            "internalToken": []
+          }
+        ],
+        "x-access": "internal"
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "JWT do auth-service phát hành, kiểm tra tại API Gateway"
+      },
+      "internalToken": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-Internal-Token",
+        "description": "Khóa nội bộ cho lời gọi service-to-service"
+      }
+    },
+    "schemas": {
+      "Error": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string",
+                "example": "OUT_OF_STOCK"
+              },
+              "message": {
+                "type": "string",
+                "example": "Không đủ hàng: Pate gan Hạ Long 150g (còn 0)"
+              },
+              "details": {}
+            },
+            "required": [
+              "code",
+              "message"
+            ]
+          }
+        }
+      }
+    },
+    "responses": {
+      "ClientError": {
+        "description": "Lỗi phía client (400, 401, 403, 404, 409...)",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      }
+    }
+  }
+}

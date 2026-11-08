@@ -1,0 +1,313 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "api-gateway — hợp đồng dịch vụ",
+    "version": "1.0.0",
+    "description": "Tầng tích hợp: định tuyến, xác thực, hợp đồng dịch vụ, dàn xếp SOAP/REST",
+    "x-service-name": "api-gateway",
+    "x-service-layer": "integration"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8080"
+    }
+  ],
+  "tags": [
+    {
+      "name": "<path:subpath>"
+    },
+    {
+      "name": "contracts"
+    },
+    {
+      "name": "dashboard"
+    },
+    {
+      "name": "health"
+    },
+    {
+      "name": "operations"
+    },
+    {
+      "name": "registry"
+    },
+    {
+      "name": "soap"
+    }
+  ],
+  "paths": {
+    "/api/contracts": {
+      "get": {
+        "operationId": "contracts_index",
+        "summary": "Danh mục dịch vụ (service inventory) và đường dẫn tới hợp đồng của từng service",
+        "tags": [
+          "contracts"
+        ],
+        "responses": {
+          "200": {
+            "description": "Thành công",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "$ref": "#/components/responses/ClientError"
+          }
+        },
+        "security": [],
+        "x-access": "public"
+      }
+    },
+    "/api/contracts/{name}": {
+      "get": {
+        "operationId": "contract_detail",
+        "summary": "Hợp đồng OpenAPI công khai của một service (đã bỏ API nội bộ)",
+        "tags": [
+          "contracts"
+        ],
+        "responses": {
+          "200": {
+            "description": "Thành công",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "$ref": "#/components/responses/ClientError"
+          }
+        },
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "security": [],
+        "x-access": "public"
+      }
+    },
+    "/api/dashboard": {
+      "get": {
+        "operationId": "dashboard",
+        "summary": "API Composition: gộp dữ liệu từ nhiều service cho trang tổng quan quản trị",
+        "tags": [
+          "dashboard"
+        ],
+        "responses": {
+          "200": {
+            "description": "Thành công",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "$ref": "#/components/responses/ClientError"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-access": "roles:admin,staff",
+        "description": "Vai trò được phép: admin, staff"
+      }
+    },
+    "/api/health": {
+      "get": {
+        "operationId": "health",
+        "summary": "Trạng thái gateway và từng service (độ trễ, lớp dịch vụ, nguồn địa chỉ, circuit breaker)",
+        "tags": [
+          "health"
+        ],
+        "responses": {
+          "200": {
+            "description": "Thành công",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "$ref": "#/components/responses/ClientError"
+          }
+        },
+        "security": [],
+        "x-access": "public"
+      }
+    },
+    "/api/registry": {
+      "get": {
+        "operationId": "registry_view",
+        "summary": "Danh bạ dịch vụ: các service, lớp dịch vụ, phiên bản và instance đang chạy",
+        "tags": [
+          "registry"
+        ],
+        "responses": {
+          "200": {
+            "description": "Thành công",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "$ref": "#/components/responses/ClientError"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-access": "roles:admin,staff",
+        "description": "Vai trò được phép: admin, staff"
+      }
+    },
+    "/api/soap/catalog": {
+      "get": {
+        "operationId": "soap_wsdl",
+        "summary": "WSDL của CatalogService (thêm ?wsdl)",
+        "tags": [
+          "soap"
+        ],
+        "responses": {
+          "200": {
+            "description": "Thành công",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "$ref": "#/components/responses/ClientError"
+          }
+        },
+        "security": [],
+        "x-access": "public"
+      },
+      "post": {
+        "operationId": "soap_endpoint",
+        "summary": "CatalogService SOAP: GetCategories, SearchProducts, GetProduct (ESB chuyển sang REST product-service)",
+        "tags": [
+          "soap"
+        ],
+        "responses": {
+          "200": {
+            "description": "Thành công",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Tạo thành công",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "$ref": "#/components/responses/ClientError"
+          }
+        },
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "security": [],
+        "x-access": "public"
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "JWT do auth-service phát hành, kiểm tra tại API Gateway"
+      },
+      "internalToken": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-Internal-Token",
+        "description": "Khóa nội bộ cho lời gọi service-to-service"
+      }
+    },
+    "schemas": {
+      "Error": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string",
+                "example": "OUT_OF_STOCK"
+              },
+              "message": {
+                "type": "string",
+                "example": "Không đủ hàng: Pate gan Hạ Long 150g (còn 0)"
+              },
+              "details": {}
+            },
+            "required": [
+              "code",
+              "message"
+            ]
+          }
+        }
+      }
+    },
+    "responses": {
+      "ClientError": {
+        "description": "Lỗi phía client (400, 401, 403, 404, 409...)",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      }
+    }
+  }
+}

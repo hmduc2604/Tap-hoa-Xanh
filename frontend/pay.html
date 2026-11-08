@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Xanh Pay — cổng thanh toán (mô phỏng)</title>
+  <link rel="stylesheet" href="/assets/css/base.css">
+  <style>
+    body { background: #0F3B5F; min-height: 100vh; display: grid; place-items: center; padding: 16px; }
+    .gateway { width: min(420px, 100%); background: #fff; border-radius: var(--r-lg); overflow: hidden; box-shadow: var(--shadow-pop); }
+    .gateway header { background: #1B5E93; color: #fff; padding: 1.2rem 1.4rem; }
+    .gateway header b { font: 800 1.5rem var(--font-sign); letter-spacing: .02em; }
+    .gateway header p { margin: .2rem 0 0; font-size: .85rem; opacity: .85; }
+    .gateway .content { padding: 1.4rem; display: grid; gap: 1rem; }
+    .amount { font: 800 2.6rem/1 var(--font-sign); color: #0F3B5F; font-variant-numeric: tabular-nums; }
+    dl { display: grid; grid-template-columns: auto 1fr; gap: .3rem 1rem; margin: 0; font-size: .92rem; }
+    dt { color: var(--muted); } dd { margin: 0; font-weight: 600; text-align: right; }
+    .demo-note { font-size: .8rem; color: var(--muted); background: var(--sky-soft); padding: .6rem .8rem; border-radius: var(--r-sm); }
+    .btn.pay { background: #1B5E93; } .btn.pay:hover { background: #0F3B5F; }
+  </style>
+</head>
+<body>
+  <div class="gateway">
+    <header><b>Xanh Pay</b><p>Cổng thanh toán ví điện tử mô phỏng</p></header>
+    <div class="content" id="content"><div class="spinner"></div></div>
+  </div>
+  <script src="/assets/js/core.js"></script>
+  <script>
+    const pid = param('payment_id');
+    const box = qs('#content');
+    async function load() {
+      if (!Session.token) { goLogin(); return; }
+      try {
+        const p = await api(`/payments/${pid}`);
+        if (p.status !== 'PENDING') {
+          box.innerHTML = `<p class="amount">${money(p.amount)}</p><p>Giao dịch cho đơn <b>#${esc(p.order_code)}</b> ${p.status === 'PAID' ? 'đã được thanh toán.' : 'không còn hiệu lực (' + esc(p.status_label) + ').'}</p>
+            <a class="btn block" href="/orders.html?id=${p.order_id}">Về đơn hàng</a>`;
+          return;
+        }
+        box.innerHTML = `
+          <div><div class="muted small">Số tiền thanh toán</div><div class="amount">${money(p.amount)}</div></div>
+          <dl><dt>Đơn hàng</dt><dd>#${esc(p.order_code)}</dd><dt>Người bán</dt><dd>Tạp Hóa Xanh</dd><dt>Phương thức</dt><dd>${esc(p.method_label)}</dd></dl>
+          <p class="demo-note">Đây là cổng thanh toán giả lập cho mục đích demo, không có tiền thật được chuyển.</p>
+          <button class="btn pay lg block" id="ok">Xác nhận thanh toán</button>
+          <button class="btn secondary block" id="fail">Hủy giao dịch</button>`;
+        qs('#ok').onclick = (e) => pay(true, e.currentTarget);
+        qs('#fail').onclick = (e) => pay(false, e.currentTarget);
+        async function pay(success, btn) {
+          setBusy(btn, true);
+          try {
+            await api(`/payments/${pid}/pay`, { method: 'POST', body: { success } });
+            box.innerHTML = `<p class="amount">✓</p><p>Thanh toán thành công <b>${money(p.amount)}</b> cho đơn #${esc(p.order_code)}. Đơn hàng sẽ được xác nhận tự động.</p>`;
+            setTimeout(() => { location.href = `/orders.html?id=${p.order_id}`; }, 1600);
+          } catch (err) {
+            if (!success) { location.href = `/orders.html?id=${p.order_id}`; return; }
+            toastError(err); setBusy(btn, false);
+          }
+        }
+      } catch (e) { box.innerHTML = `<p>${esc(e.message)}</p><a class="btn" href="/orders.html">Về đơn hàng</a>`; }
+    }
+    load();
+  </script>
+</body>
+</html>

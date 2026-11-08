@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Đăng nhập — Tạp Hóa Xanh</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧺</text></svg>">
+  <link rel="stylesheet" href="/assets/css/base.css">
+  <link rel="stylesheet" href="/assets/css/store.css">
+</head>
+<body>
+  <main class="auth-page">
+    <div class="auth-card">
+      <div class="tabs" role="tablist">
+        <button role="tab" aria-selected="true" data-tab="login">Đăng nhập</button>
+        <button role="tab" aria-selected="false" data-tab="register">Tạo tài khoản</button>
+      </div>
+      <form id="login-form">
+        <label class="field">Email<input name="email" type="email" required autocomplete="email"></label>
+        <label class="field">Mật khẩu<input name="password" type="password" required autocomplete="current-password"></label>
+        <button class="btn lg block" type="submit">Đăng nhập</button>
+      </form>
+      <form id="register-form" class="hidden">
+        <label class="field">Họ và tên<input name="full_name" required autocomplete="name"></label>
+        <label class="field">Email<input name="email" type="email" required autocomplete="email"></label>
+        <label class="field">Số điện thoại<input name="phone" inputmode="tel" placeholder="0912345678" autocomplete="tel"></label>
+        <label class="field">Mật khẩu<span class="hint">Ít nhất 6 ký tự</span><input name="password" type="password" minlength="6" required autocomplete="new-password"></label>
+        <button class="btn lg block" type="submit">Tạo tài khoản</button>
+        <p class="muted small" style="margin:0">Tài khoản mới nhận ngay mã WELCOME10 giảm 10% cho đơn đầu tiên.</p>
+      </form>
+      <div class="demo-accounts">
+        <b>Tài khoản dùng thử</b><br>
+        <button data-demo="khach@taphoa.vn|Khach@123">Khách hàng</button> ·
+        <button data-demo="staff@taphoa.vn|Staff@123">Nhân viên</button> ·
+        <button data-demo="admin@taphoa.vn|Admin@123">Quản trị viên</button>
+      </div>
+    </div>
+  </main>
+  <script src="/assets/js/core.js"></script>
+  <script src="/assets/js/shop.js"></script>
+  <script>
+    renderShell();
+    const next = param('next');
+    const afterLogin = (user) => {
+      const staff = user.role === 'admin' || user.role === 'staff';
+      location.href = next && next.startsWith('/') && !next.startsWith('//') ? next : (staff ? '/admin/' : '/');
+    };
+    qsa('[data-tab]').forEach((b) => b.addEventListener('click', () => {
+      qsa('[data-tab]').forEach((x) => x.setAttribute('aria-selected', String(x === b)));
+      qs('#login-form').classList.toggle('hidden', b.dataset.tab !== 'login');
+      qs('#register-form').classList.toggle('hidden', b.dataset.tab !== 'register');
+    }));
+    qs('#login-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = e.submitter;
+      setBusy(btn, true, 'Đang đăng nhập…');
+      try {
+        const res = await api('/auth/login', { method: 'POST', body: formData(e.target) });
+        Session.set(res.token, res.user);
+        afterLogin(res.user);
+      } catch (err) { toastError(err); setBusy(btn, false); }
+    });
+    qs('#register-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = e.submitter;
+      setBusy(btn, true, 'Đang tạo tài khoản…');
+      try {
+        const res = await api('/auth/register', { method: 'POST', body: formData(e.target) });
+        Session.set(res.token, res.user);
+        afterLogin(res.user);
+      } catch (err) { toastError(err); setBusy(btn, false); }
+    });
+    qsa('[data-demo]').forEach((b) => b.addEventListener('click', () => {
+      const [email, pw] = b.dataset.demo.split('|');
+      qs('[data-tab=login]').click();
+      qs('#login-form [name=email]').value = email;
+      qs('#login-form [name=password]').value = pw;
+      qs('#login-form [type=submit]').focus();
+    }));
+  </script>
+</body>
+</html>

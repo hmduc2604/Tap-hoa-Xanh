@@ -1,0 +1,4 @@
+# Đủ để chạy toàn bộ hệ thống bằng run_local.py (SQLite + event bus HTTP)
+Flask==3.0.3
+requests==2.32.3
+PyJWT==2.9.0

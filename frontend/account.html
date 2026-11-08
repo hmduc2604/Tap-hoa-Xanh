@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tài khoản — Tạp Hóa Xanh</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧺</text></svg>">
+  <link rel="stylesheet" href="/assets/css/base.css">
+  <link rel="stylesheet" href="/assets/css/store.css">
+</head>
+<body>
+  <main class="wrap page">
+    <div class="page-title"><h1>Tài khoản</h1></div>
+    <div class="two-col" style="grid-template-columns:1fr 1fr">
+      <div>
+        <section class="panel">
+          <h2>Thông tin cá nhân</h2>
+          <form id="profile" style="display:grid;gap:.9rem">
+            <label class="field">Email<input name="email" disabled></label>
+            <label class="field">Họ và tên<input name="full_name" required></label>
+            <label class="field">Số điện thoại<input name="phone" inputmode="tel"></label>
+            <button class="btn" type="submit" style="justify-self:start">Lưu thông tin</button>
+          </form>
+        </section>
+        <section class="panel">
+          <h2>Đổi mật khẩu</h2>
+          <form id="password" style="display:grid;gap:.9rem">
+            <label class="field">Mật khẩu hiện tại<input name="old_password" type="password" required autocomplete="current-password"></label>
+            <label class="field">Mật khẩu mới<input name="new_password" type="password" minlength="6" required autocomplete="new-password"></label>
+            <button class="btn secondary" type="submit" style="justify-self:start">Đổi mật khẩu</button>
+          </form>
+        </section>
+      </div>
+      <div>
+        <section class="panel">
+          <div class="page-title" style="margin:0 0 .4rem"><h2 style="margin:0">Sổ địa chỉ</h2><button class="btn secondary sm" id="add-address">Thêm địa chỉ</button></div>
+          <div id="addresses"><div class="spinner"></div></div>
+        </section>
+        <section class="panel">
+          <div class="page-title" style="margin:0 0 .4rem"><h2 style="margin:0">Thông báo</h2><button class="btn ghost sm" id="read-all-page">Đánh dấu đã đọc</button></div>
+          <div id="notifications"><div class="spinner"></div></div>
+        </section>
+      </div>
+    </div>
+  </main>
+  <script src="/assets/js/core.js"></script>
+  <script src="/assets/js/shop.js"></script>
+  <script>
+    if (requireLogin()) {
+      renderShell('account');
+      const profile = qs('#profile');
+
+      api('/auth/me').then((u) => {
+        profile.email.value = u.email; profile.full_name.value = u.full_name; profile.phone.value = u.phone || '';
+      }).catch(toastError);
+
+      profile.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        try {
+          const res = await api('/auth/me', { method: 'PUT', body: { full_name: profile.full_name.value.trim(), phone: profile.phone.value.trim() } });
+          Session.set(res.token, res.user);
+          toast('Đã lưu thông tin');
+        } catch (err) { toastError(err); }
+      });
+      qs('#password').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        try { await api('/auth/change-password', { method: 'PUT', body: formData(e.target) }); e.target.reset(); toast('Đã đổi mật khẩu'); }
+        catch (err) { toastError(err); }
+      });
+
+      async function loadAddresses() {
+        const { items } = await api('/users/me/addresses');
+        qs('#addresses').innerHTML = items.length ? items.map((a) => `
+          <div class="address"><div><b>${esc(a.recipient_name)}</b> · ${esc(a.phone)} ${a.is_default ? pill('DELIVERED', 'Mặc định') : ''}<br>
+            <span class="muted small">${esc([a.address_line, a.ward, a.district, a.city].filter(Boolean).join(', '))}</span></div>
+            <div style="display:flex;gap:.2rem;align-items:start">
+              ${a.is_default ? '' : `<button class="btn ghost sm" data-default="${a.id}">Đặt mặc định</button>`}
+              <button class="btn ghost sm" data-edit='${esc(JSON.stringify(a))}'>Sửa</button>
+              <button class="btn ghost sm" data-del="${a.id}">Xóa</button></div></div>`).join('')
+          : '<div class="empty"><strong>Chưa có địa chỉ</strong>Thêm địa chỉ để đặt hàng nhanh hơn.</div>';
+      }
+
+      function addressForm(a = {}) {
+        const d = openDialog({
+          title: a.id ? 'Sửa địa chỉ' : 'Thêm địa chỉ',
+          body: `<form id="addr" class="form-grid">
+            <label class="field">Người nhận<input name="recipient_name" required value="${esc(a.recipient_name || '')}"></label>
+            <label class="field">Số điện thoại<input name="phone" required value="${esc(a.phone || '')}"></label>
+            <label class="field full">Địa chỉ<input name="address_line" required value="${esc(a.address_line || '')}"></label>
+            <label class="field">Phường / Xã<input name="ward" value="${esc(a.ward || '')}"></label>
+            <label class="field">Quận / Huyện<input name="district" value="${esc(a.district || '')}"></label>
+            <label class="field">Tỉnh / Thành phố<input name="city" value="${esc(a.city || 'TP. Hồ Chí Minh')}"></label>
+            <label class="check"><input type="checkbox" name="is_default" ${a.is_default ? 'checked' : ''}> Đặt làm mặc định</label></form>`,
+          footer: '<button class="btn secondary" data-close>Hủy</button><button class="btn" id="addr-save">Lưu địa chỉ</button>',
+        });
+        d.el.querySelector('#addr-save').addEventListener('click', async () => {
+          const form = d.el.querySelector('#addr');
+          if (!form.reportValidity()) return;
+          try {
+            await api(a.id ? `/users/me/addresses/${a.id}` : '/users/me/addresses', { method: a.id ? 'PUT' : 'POST', body: formData(form) });
+            d.close(); toast('Đã lưu địa chỉ'); loadAddresses();
+          } catch (err) { toastError(err); }
+        });
+      }
+      qs('#add-address').addEventListener('click', () => addressForm());
+      qs('#addresses').addEventListener('click', async (e) => {
+        const t = e.target;
+        if (t.dataset.edit) addressForm(JSON.parse(t.dataset.edit));
+        if (t.dataset.default) { await api(`/users/me/addresses/${t.dataset.default}`, { method: 'PUT', body: { is_default: true } }).catch(toastError); loadAddresses(); }
+        if (t.dataset.del && await confirmDialog('Xóa địa chỉ này?', { okText: 'Xóa', danger: true })) {
+          await api(`/users/me/addresses/${t.dataset.del}`, { method: 'DELETE' }).catch(toastError); loadAddresses();
+        }
+      });
+
+      async function loadNotifications() {
+        const data = await api('/notifications', { params: { page_size: 20 } });
+        qs('#notifications').innerHTML = data.items.length ? data.items.map((n) => `
+          <div class="address" style="${n.is_read ? '' : 'background:#F5FAF3;margin:0 -1.3rem;padding-inline:1.3rem'}">
+            <div><b>${esc(n.title)}</b><br><span class="small">${esc(n.message)}</span><br><span class="muted small">${timeAgo(n.created_at)}</span></div>
+            ${n.link ? `<a class="small" href="${esc(n.link)}">Xem</a>` : ''}</div>`).join('')
+          : '<div class="empty"><strong>Chưa có thông báo</strong></div>';
+      }
+      qs('#read-all-page').addEventListener('click', async () => { await api('/notifications/read-all', { method: 'PUT' }).catch(toastError); loadNotifications(); refreshBell(); });
+
+      loadAddresses().catch(toastError);
+      loadNotifications().catch(toastError);
+    }
+  </script>
+</body>
+</html>

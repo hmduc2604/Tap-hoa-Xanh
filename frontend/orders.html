@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Đơn hàng của tôi — Tạp Hóa Xanh</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧺</text></svg>">
+  <link rel="stylesheet" href="/assets/css/base.css">
+  <link rel="stylesheet" href="/assets/css/store.css">
+</head>
+<body>
+  <main class="wrap page">
+    <div class="page-title"><h1>Đơn hàng của tôi</h1></div>
+    <div class="tabs" role="tablist" id="tabs">
+      <button role="tab" aria-selected="true" data-status="">Tất cả</button>
+      <button role="tab" aria-selected="false" data-status="PENDING">Chờ xác nhận</button>
+      <button role="tab" aria-selected="false" data-status="CONFIRMED">Đã xác nhận</button>
+      <button role="tab" aria-selected="false" data-status="SHIPPING">Đang giao</button>
+      <button role="tab" aria-selected="false" data-status="DELIVERED">Đã giao</button>
+      <button role="tab" aria-selected="false" data-status="CANCELLED">Đã hủy</button>
+    </div>
+    <div id="list"><div class="spinner"></div></div>
+    <nav class="pager" id="pager" aria-label="Phân trang"></nav>
+  </main>
+  <script src="/assets/js/core.js"></script>
+  <script src="/assets/js/shop.js"></script>
+  <script src="/assets/js/orders.js"></script>
+</body>
+</html>

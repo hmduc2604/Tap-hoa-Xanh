@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Giỏ hàng — Tạp Hóa Xanh</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧺</text></svg>">
+  <link rel="stylesheet" href="/assets/css/base.css">
+  <link rel="stylesheet" href="/assets/css/store.css">
+</head>
+<body>
+  <main class="wrap page">
+    <div class="page-title"><h1>Giỏ hàng</h1><a href="/">Tiếp tục mua sắm</a></div>
+    <div class="two-col">
+      <div>
+        <section class="panel" aria-labelledby="items-title">
+          <h2 id="items-title">Sản phẩm</h2>
+          <div id="items"><div class="spinner"></div></div>
+        </section>
+        <section class="panel" id="shipping-panel" aria-labelledby="ship-title">
+          <h2 id="ship-title">Giao đến</h2>
+          <div id="addresses" class="options"></div>
+          <form id="new-address" class="form-grid hidden" style="margin-top:.8rem">
+            <label class="field">Người nhận<input name="recipient_name" required></label>
+            <label class="field">Số điện thoại<input name="phone" required inputmode="tel" placeholder="0912345678"></label>
+            <label class="field full">Địa chỉ<input name="address_line" required placeholder="Số nhà, tên đường"></label>
+            <label class="field">Phường / Xã<input name="ward"></label>
+            <label class="field">Quận / Huyện<input name="district"></label>
+            <label class="field">Tỉnh / Thành phố<input name="city" value="TP. Hồ Chí Minh"></label>
+            <label class="check full"><input type="checkbox" name="save" checked> Lưu vào sổ địa chỉ</label>
+          </form>
+          <label class="field" style="margin-top:1rem">Ghi chú cho cửa hàng<textarea id="note" rows="2" placeholder="Ví dụ: giao giờ hành chính, gọi trước khi giao"></textarea></label>
+        </section>
+        <section class="panel" aria-labelledby="pay-title">
+          <h2 id="pay-title">Thanh toán</h2>
+          <div class="options" id="methods">
+            <label class="option"><input type="radio" name="method" value="COD" checked><div><b>Thanh toán khi nhận hàng</b><span>Trả tiền mặt cho người giao hàng</span></div></label>
+            <label class="option"><input type="radio" name="method" value="BANK_TRANSFER"><div><b>Chuyển khoản ngân hàng</b><span>Cửa hàng xác nhận khi nhận được tiền</span></div></label>
+            <label class="option"><input type="radio" name="method" value="EWALLET"><div><b>Ví điện tử Xanh Pay</b><span>Thanh toán ngay, đơn được xác nhận tự động (mô phỏng)</span></div></label>
+          </div>
+        </section>
+      </div>
+      <aside class="panel" style="position:sticky;top:92px" aria-labelledby="sum-title">
+        <h2 id="sum-title">Đơn hàng</h2>
+        <label class="field" for="coupon">Mã giảm giá</label>
+        <div class="coupon-row" style="margin-top:.3rem">
+          <input id="coupon" placeholder="Nhập mã" autocomplete="off">
+          <button class="btn secondary" id="apply-coupon">Áp dụng</button>
+        </div>
+        <p id="coupon-msg" style="margin:.4rem 0 0"></p>
+        <div id="free-ship" style="margin:1rem 0"></div>
+        <div class="sum" id="summary"></div>
+        <button class="btn lg block" id="place-order" style="margin-top:1.2rem" disabled>Đặt hàng</button>
+        <p class="muted small" style="margin-top:.6rem">Giá và tồn kho được kiểm tra lại khi đặt hàng.</p>
+      </aside>
+    </div>
+  </main>
+  <script src="/assets/js/core.js"></script>
+  <script src="/assets/js/shop.js"></script>
+  <script src="/assets/js/cart.js"></script>
+</body>
+</html>
