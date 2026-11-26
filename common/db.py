@@ -169,8 +169,40 @@ class Database:
             except Exception as exc:
                 if time.time() > deadline:
                     raise
+                if self._create_missing_database(exc):
+                    continue
                 log.warning("Database chưa sẵn sàng (%s), thử lại sau 2s...", exc)
                 time.sleep(2)
+
+    def _create_missing_database(self, exc):
+        """PostgreSQL: tạo database của service nếu chưa có.
+
+        Script init-databases.sql chỉ chạy khi volume được tạo lần đầu, nên khi thêm service mới vào hệ thống
+        đang chạy (volume cũ) database của nó chưa tồn tại. Trả True nếu vừa tạo xong."""
+        if not self.is_pg or "does not exist" not in str(exc) or "database" not in str(exc):
+            return False
+        import re
+
+        import psycopg2
+        from psycopg2 import errors, extensions
+
+        name = extensions.parse_dsn(self.url).get("dbname", "")
+        if not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", name):
+            return False
+        try:
+            conn = psycopg2.connect(extensions.make_dsn(self.url, dbname="postgres"), connect_timeout=5)
+            conn.autocommit = True
+            try:
+                conn.cursor().execute(f'CREATE DATABASE "{name}"')
+                log.warning("Đã tạo database còn thiếu: %s", name)
+            except errors.DuplicateDatabase:
+                pass  # instance khác vừa tạo
+            finally:
+                conn.close()
+            return True
+        except Exception:
+            log.exception("Không tạo được database %s", name)
+            return False
 
     def init_schema(self, ddl):
         """Tạo bảng nếu chưa có. DDL viết theo cú pháp SQLite, tự chuyển cho PostgreSQL."""

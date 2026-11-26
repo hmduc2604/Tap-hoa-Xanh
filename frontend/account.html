@@ -5,13 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Tài khoản — Tạp Hóa Xanh</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧺</text></svg>">
+  <script src="/assets/js/theme.js"></script>
   <link rel="stylesheet" href="/assets/css/base.css">
   <link rel="stylesheet" href="/assets/css/store.css">
 </head>
 <body>
   <main class="wrap page">
     <div class="page-title"><h1>Tài khoản</h1></div>
-    <div class="two-col" style="grid-template-columns:1fr 1fr">
+    <div class="two-col even">
       <div>
         <section class="panel">
           <h2>Thông tin cá nhân</h2>
@@ -115,7 +116,7 @@
       async function loadNotifications() {
         const data = await api('/notifications', { params: { page_size: 20 } });
         qs('#notifications').innerHTML = data.items.length ? data.items.map((n) => `
-          <div class="address" style="${n.is_read ? '' : 'background:#F5FAF3;margin:0 -1.3rem;padding-inline:1.3rem'}">
+          <div class="address${n.is_read ? '' : ' unread'}">
             <div><b>${esc(n.title)}</b><br><span class="small">${esc(n.message)}</span><br><span class="muted small">${timeAgo(n.created_at)}</span></div>
             ${n.link ? `<a class="small" href="${esc(n.link)}">Xem</a>` : ''}</div>`).join('')
           : '<div class="empty"><strong>Chưa có thông báo</strong></div>';

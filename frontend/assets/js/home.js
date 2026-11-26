@@ -47,7 +47,7 @@ async function loadCategories() {
 
 async function loadProducts() {
   const grid = qs('#grid');
-  grid.innerHTML = '<div class="spinner"></div>';
+  grid.innerHTML = skeletonCards(8);
   const cat = categories.find((c) => String(c.id) === String(state.category_id));
   qs('#catalog-title').textContent = state.q ? `Kết quả cho "${state.q}"` : state.on_sale ? 'Đang giảm giá' : cat ? cat.name : 'Tất cả sản phẩm';
   try {
@@ -110,7 +110,7 @@ async function openProduct(id) {
             <dt>Thương hiệu</dt><dd>${esc(p.brand || '—')}</dd>
             <dt>Quy cách</dt><dd>${esc(p.unit)}</dd>
             <dt>Mã hàng</dt><dd>${esc(p.sku)}</dd>
-            <dt>Tình trạng</dt><dd>${p.available === undefined ? 'Đang cập nhật' : p.available > 0 ? `Còn ${p.available} sản phẩm` : '<span class="soldout" style="color:var(--chili)">Tạm hết hàng</span>'}</dd>
+            <dt>Tình trạng</dt><dd>${p.available === undefined ? 'Đang cập nhật' : p.available > 0 ? `Còn ${p.available} sản phẩm` : '<span class="soldout">Tạm hết hàng</span>'}</dd>
           </dl>
           <p>${esc(p.description || '')}</p>
           <div style="display:flex;gap:.6rem;align-items:center;flex-wrap:wrap">
@@ -124,6 +124,7 @@ async function openProduct(id) {
         ${reviews.items.length ? reviews.items.map((r) => `<div class="review"><span class="stars">${stars(r.rating)}</span> <b>${esc(r.user_name || 'Khách hàng')}</b> <span class="muted small">${fmtDate(r.created_at, false)}</span><p style="margin:.3rem 0 0">${esc(r.comment || '')}</p></div>`).join('')
           : '<p class="muted">Chưa có đánh giá. Khách đã nhận hàng có thể đánh giá trong mục Đơn hàng.</p>'}
       </section>
+      <section class="reviews hidden" id="pd-together"><h3>Thường được mua cùng<span class="together-badge"></span></h3><div class="related together-list"></div></section>
       ${p.related.length ? `<section class="reviews"><h3>Cùng danh mục</h3><div class="related">${p.related.map((r) => `
         <div class="mini" data-open="${r.id}" role="button" tabindex="0">${thumb(r)}<div>${esc(r.name)}</div><b>${money(r.final_price)}</b></div>`).join('')}</div></section>` : ''}`;
     const qty = d.body.querySelector('#pd-qty');
@@ -133,6 +134,7 @@ async function openProduct(id) {
     d.body.querySelector('#pd-add').addEventListener('click', async (e) => {
       if (await addToCart(p.id, Number(qty.value || 1), e.currentTarget)) d.close();
     });
+    loadTogether(p.id, d.body.querySelector('#pd-together'));
     d.body.addEventListener('click', (e) => {
       const r = e.target.closest('.related [data-open]');
       if (r) { d.close(); openProduct(r.dataset.open); }

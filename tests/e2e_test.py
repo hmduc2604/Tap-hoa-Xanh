@@ -1,6 +1,7 @@
 """Kiểm thử end-to-end toàn hệ thống qua API Gateway.
 
-Chạy sau khi hệ thống đã khởi động (Docker hoặc run_local.py):
+Chạy sau khi hệ thống đã khởi động (Docker hoặc run_local.py) trên CSDL MỚI (run_local.py --reset hoặc docker compose down -v):
+bộ test đặt hàng, nhập kho, hủy đơn... làm thay đổi tồn kho và lượt dùng mã, nên chạy lần hai trên cùng dữ liệu có thể sai vài kiểm tra.
     python tests/e2e_test.py                       # mặc định http://localhost:8000
     GATEWAY_URL=http://localhost:8000 python tests/e2e_test.py
 """
@@ -336,7 +337,7 @@ def main():
 
     section("SOA: Hợp đồng dịch vụ (OpenAPI)")
     idx = expect(anon.get("/api/contracts"), 200, "Danh mục dịch vụ (service inventory)")
-    check(len(idx["items"]) == 9 and all(i["layer"] for i in idx["items"]), "9 hợp đồng kèm lớp dịch vụ", idx["items"])
+    check(len(idx["items"]) == 10 and all(i["layer"] for i in idx["items"]), "10 hợp đồng kèm lớp dịch vụ", idx["items"])
     pc = expect(anon.get("/api/contracts/product"), 200, "Hợp đồng product-service")
     ops = [(path, verb, op) for path, v in pc["paths"].items() for verb, op in v.items()]
     check(pc["openapi"] == "3.0.3" and pc["info"]["x-service-layer"] == "entity" and len(ops) >= 10, "OpenAPI 3.0.3 đúng lớp entity")
@@ -386,6 +387,60 @@ def main():
         check(schema.validate(etree.fromstring(raw).find(f"{{{SOAP_NS}}}Body")[0]), "SOAP response hợp lệ theo XSD trong WSDL")
     except ImportError:
         print("  (bỏ qua kiểm tra XSD - chưa cài lxml)")
+
+    section("Tính năng AI (mô hình cục bộ mặc định; chạy được cả khi thiếu tệp mô hình hoặc khóa API: dùng phương án dự phòng)")
+    st = expect(anon.get("/api/ai/status"), 200, "Trạng thái AI")
+    engine = st["engine"]
+    check(engine in ("local", "llm", "basic"), "Trạng thái nêu rõ cách chạy", engine)
+    sources = {"local": ("model", "history", "popular"), "llm": ("ai", "history", "popular"), "basic": ("history", "popular")}[engine]
+    chat_source = {"local": "local", "llm": "ai", "basic": "keyword"}[engine]
+    rec = expect(anon.get("/api/ai/recommendations/12"), 200, "Gợi ý mua kèm cho Nước mắm Nam Ngư")
+    check(rec["items"] and 12 not in [i["id"] for i in rec["items"]] and rec["source"] in sources,
+          "Có gợi ý, không gợi ý chính nó", rec.get("source"))
+    check(all(i["final_price"] > 0 and i["name"] for i in rec["items"]), "Thẻ gợi ý có tên và giá")
+    expect(anon.get("/api/ai/recommendations/999999"), 404, "Gợi ý cho sản phẩm không tồn tại")
+    expect(anon.post("/api/ai/chat", {"messages": [{"role": "user", "content": "xin chào"}]}), 401, "Chat cần đăng nhập")
+    expect(cust.post("/api/ai/chat", {"messages": []}), 400, "Chat với dữ liệu rỗng")
+    chat_res = expect(cust.post("/api/ai/chat", {"messages": [{"role": "user", "content": "nuoc mam"}]}), 200, "Chat hỏi nước mắm")
+    check(chat_res["reply"] and chat_res["source"] == chat_source, "Chat trả lời đúng nguồn", chat_res.get("source"))
+    if engine != "llm":  # AI ngoài có thể diễn đạt khác; hai chế độ còn lại phải tìm ra nước mắm
+        check(any("ước mắm" in p["name"] for p in chat_res["products"]), "Tìm ra nước mắm", chat_res["products"])
+    expect(anon.post("/api/ai/meal-plan", {"request": "bữa tối cho 4 người"}), 401, "Lập thực đơn cần đăng nhập")
+    expect(cust.post("/api/ai/meal-plan", {"request": ""}), 400, "Lập thực đơn với mô tả rỗng")
+    if engine == "local":
+        mp = expect(cust.post("/api/ai/meal-plan", {"request": "bữa tối cho 4 người"}), 200, "Lập thực đơn bữa tối cho 4 người")
+        check(mp["source"] == "local" and mp["items"] and mp["total"] >= mp["main_total"] > 0, "Thực đơn có danh sách đi chợ và tổng tiền", mp.get("summary"))
+    expect(cust.get("/api/ai/usage"), 403, "Khách không xem được thống kê AI")
+    expect(admin.get("/api/ai/usage"), 200, "Admin xem thống kê AI")
+
+    section("Thêm nhiều món vào giỏ một lần (danh sách đi chợ của thực đơn AI)")
+    bulk_mail = f"bulk{stamp}@example.com"
+    expect(anon.post("/api/auth/register", {"email": bulk_mail, "password": "Test@123", "full_name": "Khách Đi Chợ", "phone": "0987654321"}),
+           201, "Đăng ký khách mới cho giỏ hàng hàng loạt")
+    shopper, _ = login(bulk_mail, "Test@123")
+    expect(anon.post("/api/cart/items/bulk", {"items": [{"product_id": 1, "quantity": 1}]}), 401, "Chưa đăng nhập không thêm hàng loạt được")
+    expect(shopper.post("/api/cart/items/bulk", {"items": []}), 400, "Danh sách rỗng")
+    expect(shopper.post("/api/cart/items/bulk", {"items": [{"product_id": 1, "quantity": 0}]}), 400, "Số lượng 0")
+    expect(shopper.post("/api/cart/items/bulk", {"items": [{"product_id": n + 1, "quantity": 1} for n in range(31)]}), 400, "Quá 30 dòng")
+    # Tồn kho thay đổi theo các lần chạy trước (kiểm thử nhập hàng), nên đọc tồn thực tế rồi xin vượt 5 đơn vị
+    stock5 = expect(anon.get("/api/products/5"), 200, "Đọc tồn kho sản phẩm 5")["available"]
+    ask5 = min(99, stock5 + 5)
+    res = expect(shopper.post("/api/cart/items/bulk", {"items": [
+        {"product_id": 1, "quantity": 2}, {"product_id": 7, "quantity": 3}, {"product_id": 1, "quantity": 1},
+        {"product_id": 999999, "quantity": 1}, {"product_id": 23, "quantity": 1}, {"product_id": 5, "quantity": ask5}]}), 200, "Thêm 6 dòng (có dòng trùng, không tồn tại, hết hàng, vượt kho)")
+    got = {a["product_id"]: a["quantity"] for a in res["added"]}
+    check(got.get(1) == 3 and got.get(7) == 3, "Dòng trùng được cộng dồn (2 + 1)", res["added"])
+    failed = {f["product_id"]: f["reason"] for f in res["failed"]}
+    check(999999 in failed and 23 in failed and all(failed.values()), "Sản phẩm không tồn tại / hết hàng nằm trong failed kèm lý do", res["failed"])
+    p5 = next((a for a in res["adjusted"] if a["product_id"] == 5), None)
+    check(stock5 >= 99 or (p5 and p5["requested"] == ask5 and p5["added"] == stock5) or (stock5 == 0 and 5 in failed),
+          "Vượt tồn kho: chỉ thêm đúng phần còn lại (adjusted) hoặc từ chối nếu hết hàng", (stock5, res["adjusted"], res["failed"]))
+    added_total = sum(got.values()) + sum(a["added"] for a in res["adjusted"])
+    check(res["cart"]["item_count"] == added_total and shopper.get("/api/cart/count")[1]["count"] == added_total,
+          "Giỏ hàng khớp số đã thêm; dòng lỗi không làm hỏng các dòng còn lại", (res["cart"]["item_count"], added_total))
+    res2 = expect(shopper.post("/api/cart/items/bulk", {"items": [{"product_id": 1, "quantity": 2}]}), 200, "Thêm tiếp cùng sản phẩm")
+    line1 = next(i for i in res2["cart"]["items"] if i["product_id"] == 1)
+    check(line1["quantity"] == 5, "Số lượng cộng dồn với giỏ hiện có (3 + 2)", line1["quantity"])
 
     section("Rate limiting")
     fake_ip = {"X-Forwarded-For": f"10.{stamp[-2:]}.{stamp[-4:-2]}.7"}  # tách bucket để không chặn lần chạy sau

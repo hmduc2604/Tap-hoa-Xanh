@@ -12,24 +12,26 @@ function renderShell(active = '') {
         <button type="submit">Tìm</button>
       </form>
       <nav class="top-nav" aria-label="Điều hướng chính">
+        <a href="/meal.html" ${active === 'meal' ? 'aria-current="page"' : ''}>🍳 <span class="label">Thực đơn AI</span></a>
         ${user ? `<a href="/orders.html" ${active === 'orders' ? 'aria-current="page"' : ''}>📦 <span class="label">Đơn hàng</span></a>` : ''}
         ${user ? `<div style="position:relative"><button type="button" class="nav-btn" id="bell" aria-haspopup="true" aria-expanded="false">🔔 <span class="badge red hidden" id="bell-count">0</span><span class="sr-only">Thông báo</span></button></div>` : ''}
         <a href="/cart.html" ${active === 'cart' ? 'aria-current="page"' : ''}>🧺 <span class="label">Giỏ hàng</span> <span class="badge" id="cart-count">0</span></a>
         ${user
           ? `<div style="position:relative"><button type="button" class="nav-btn" id="account-btn" aria-haspopup="true" aria-expanded="false">👤 <span class="label who">${esc(user.full_name)}</span></button></div>`
           : `<a href="/login.html">Đăng nhập</a>`}
+        ${Theme.buttonHtml()}
       </nav>
     </div>`;
   const sub = document.createElement('div');
   sub.className = 'subsign';
   sub.innerHTML = `<div class="wrap"><span>Giao nhanh trong 2 giờ quanh khu vực Thủ Đức</span><span>Miễn phí giao hàng cho đơn từ 300.000đ</span><span>Hotline 0900 000 001</span></div>`;
-  document.body.prepend(header, sub);
+  document.body.prepend(sub, header); // dải thông tin nằm trên biển hiệu; mái hiên rủ xuống dưới biển hiệu (xem store.css)
 
   const footer = document.createElement('footer');
   footer.className = 'footer';
   footer.innerHTML = `<div class="wrap">
       <div><b>Tạp Hóa Xanh</b><p>97 Man Thiện, Hiệp Phú, TP. Thủ Đức. Mở cửa 6:00 – 22:00 mỗi ngày.</p></div>
-      <div><p>Hỗ trợ</p><a href="/orders.html">Tra cứu đơn hàng</a><br><a href="/account.html">Tài khoản</a></div>
+      <div><p>Hỗ trợ</p><a href="/meal.html">Thực đơn AI</a><br><a href="/orders.html">Tra cứu đơn hàng</a><br><a href="/account.html">Tài khoản</a></div>
       <div><p>Dành cho cửa hàng</p><a href="/admin/">Trang quản trị</a><br><a href="/api/health">Trạng thái hệ thống</a><br><a href="/api-docs.html">Hợp đồng dịch vụ (API)</a></div>
     </div>`;
   document.body.append(footer);
@@ -132,4 +134,24 @@ async function addToCart(productId, quantity = 1, btn) {
 
 function priceBlock(p) {
   return `${priceTag(p.final_price)}${p.sale_price ? ` <span class="was">${money(p.price)}</span>` : ''}`;
+}
+
+/* Gợi ý "thường được mua cùng" (ai-service). Lỗi hay chưa có dữ liệu thì ẩn khối, không ảnh hưởng trang. */
+async function loadTogether(productId, box, { exclude = [], onPick, add = false, cart = [] } = {}) {
+  if (!box) return;
+  try {
+    // cart: các món đang có trong giỏ, để mô hình gợi ý theo cả giỏ hàng (không chỉ một sản phẩm)
+    const data = await api(`/ai/recommendations/${productId}${cart.length ? `?cart=${cart.slice(0, 20).join(',')}` : ''}`);
+    const items = data.items.filter((p) => !exclude.includes(p.id));
+    if (!items.length) { box.classList.add('hidden'); return; }
+    const badge = data.source === 'ai' || data.source === 'model' ? ' <span class="ai-tag">Gợi ý bởi AI</span>' : '';
+    box.querySelector('.together-list').innerHTML = items.map((p) => `
+      <div class="mini" ${add ? '' : `data-open="${p.id}" role="button" tabindex="0"`} ${p.reason ? `title="${esc(p.reason)}"` : ''}>
+        ${thumb(p)}<div>${esc(p.name)}</div><b>${money(p.final_price)}</b>
+        ${p.reason ? `<span class="muted small why">${esc(p.reason)}</span>` : ''}
+        ${add ? `<button type="button" class="btn sm" data-add="${p.id}">Thêm</button>` : ''}
+      </div>`).join('');
+    box.querySelector('.together-badge').innerHTML = badge;
+    box.classList.remove('hidden');
+  } catch { box.classList.add('hidden'); }
 }

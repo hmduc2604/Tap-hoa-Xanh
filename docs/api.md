@@ -80,6 +80,7 @@ Phiên bản hợp đồng: mọi API service có thể gọi qua `/api/v1/...` 
 | GET | `/api/cart` | Khách | Giỏ hàng với giá & tồn kho mới nhất, cảnh báo hết hàng |
 | GET | `/api/cart/count` | Khách | Tổng số lượng (badge) |
 | POST | `/api/cart/items` | Khách | `{product_id, quantity}` (kiểm tra tồn kho) |
+| POST | `/api/cart/items/bulk` | Khách | `{items: [{product_id, quantity}]}` tối đa 30 dòng, thêm cả danh sách đi chợ một lần. Dòng trùng được cộng dồn, mỗi dòng kiểm tra tồn kho riêng: trả `added`, `adjusted` (chỉ thêm được một phần), `failed` (kèm lý do) và `cart` |
 | PUT / DELETE | `/api/cart/items/{product_id}` | Khách | Đổi số lượng (0 = xóa) / xóa |
 | DELETE | `/api/cart` | Khách | Xóa toàn bộ giỏ |
 
@@ -127,6 +128,18 @@ Phiên bản hợp đồng: mọi API service có thể gọi qua `/api/v1/...` 
 | PUT | `/api/notifications/{id}/read` | Khách | Đánh dấu đã đọc |
 | PUT | `/api/notifications/read-all` | Khách | Đọc tất cả |
 | GET | `/api/notifications/emails` | QT | Nhật ký email (mô phỏng) |
+
+## ai-service (cổng 8009)
+
+| Method | Đường dẫn | Quyền | Mô tả |
+|---|---|---|---|
+| GET | `/api/ai/recommendations/{id}?cart=1,2` | Công khai | Sản phẩm thường mua cùng. `cart` (tùy chọn) là các món trong giỏ để gợi ý theo cả giỏ. `source`: model \| ai \| history \| popular |
+| POST | `/api/ai/chat` | Khách | Trợ lý mua sắm: gửi `messages` (user/assistant), nhận `reply`, `products` (thẻ sản phẩm thật, có thể kèm `suggest_qty`), `suggestions`, `source`, `link`. Giới hạn 15 lượt/phút/người |
+| POST | `/api/ai/meal-plan` | Khách | Lập thực đơn từ mô tả bữa ăn: gửi `request` ("bữa tối cho 4 người, khoảng 200k"), tùy chọn `servings`, `budget`, `avoid`. Nhận `dishes` (món + cách làm), `items` (danh sách đi chợ: thẻ sản phẩm thật, `qty`, `pantry`, `dishes`), `main_total`, `total`, `over_budget`, `missing`, `source` (ai / local). Chỉ gợi ý, khách bấm thêm vào giỏ bằng `/api/cart/items/bulk`. Giới hạn 6 lượt/phút/người |
+| GET | `/api/ai/status` | Công khai | Engine đang chạy (local \| llm \| basic) và chỉ số chất lượng mô hình |
+| GET | `/api/ai/usage` | QT | Số lượt gọi và token theo loại, số cặp mua chung đã học |
+
+Hợp đồng OpenAPI đầy đủ: `contracts/openapi/ai-service.json`. Cách huấn luyện mô hình: `ml/README.md`.
 
 ## registry-service (cổng 8500, chỉ nội bộ)
 

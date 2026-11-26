@@ -4,6 +4,7 @@ if (requireLogin()) {
   let cart = null;
   let addresses = [];
   let coupon = '';
+  let togetherFor = null;
 
   async function loadCart() {
     try {
@@ -37,6 +38,14 @@ if (requireLogin()) {
         </div>`;
     }).join('') + (cart.degraded ? '<p class="muted small">Một số thông tin chưa cập nhật được do hệ thống bận.</p>' : '');
     qs('#place-order').disabled = cart.has_issues;
+    // gợi ý mua kèm dựa trên món có giá trị lớn nhất trong giỏ, bỏ các món đã có trong giỏ
+    const anchor = [...cart.items].sort((a, b) => b.line_total - a.line_total)[0];
+    const ids = cart.items.map((i) => i.product_id);
+    const key = anchor ? `${anchor.product_id}:${[...ids].sort((a, b) => a - b).join(',')}` : null;
+    if (anchor && key !== togetherFor) { // đổi khi thành phần giỏ đổi, vì gợi ý tính theo cả giỏ
+      togetherFor = key;
+      loadTogether(anchor.product_id, qs('#together-panel'), { exclude: ids, add: true, cart: ids });
+    }
     await preview();
   }
 
@@ -84,6 +93,11 @@ if (requireLogin()) {
       renderSummary(pv);
     } catch (e) { toastError(e); }
   }
+
+  qs('#together-panel').addEventListener('click', async (e) => {
+    const b = e.target.closest('[data-add]');
+    if (b && await addToCart(Number(b.dataset.add), 1, b)) { togetherFor = null; loadCart(); }
+  });
 
   qs('#apply-coupon').addEventListener('click', () => { coupon = qs('#coupon').value.trim().toUpperCase(); preview(); });
   qs('#coupon').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); qs('#apply-coupon').click(); } });

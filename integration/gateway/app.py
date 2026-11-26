@@ -48,12 +48,14 @@ ROUTES = [
     ("/api/payments", "payment"),
     ("/api/coupons", "promotion"),
     ("/api/notifications", "notification"),
+    ("/api/ai", "ai"),
 ]
 # Các route không bắt buộc đăng nhập (method, tiền tố)
 PUBLIC_ROUTES = [
     ("POST", "/api/auth/register"), ("POST", "/api/auth/login"),
     ("GET", "/api/categories"), ("GET", "/api/products"),
     ("GET", "/api/coupons/available"), ("GET", "/api/payments/methods"),
+    ("GET", "/api/ai/recommendations"), ("GET", "/api/ai/status"),
 ]
 HOP_BY_HOP = {"connection", "keep-alive", "proxy-authenticate", "proxy-authorization", "te", "trailers",
               "transfer-encoding", "upgrade", "host", "content-length", "content-encoding"}

@@ -3,7 +3,7 @@
 ## 1. Tổng quan
 
 Hệ thống bán hàng cho một cửa hàng tạp hóa, gồm kênh **online** (khách đặt hàng trên web) và **bán tại quầy (POS)**,
-xây theo kiến trúc hướng dịch vụ: 8 dịch vụ nghiệp vụ chia theo lớp task / entity / utility, tầng tích hợp
+xây theo kiến trúc hướng dịch vụ: 9 dịch vụ (8 nghiệp vụ và ai-service) chia theo lớp task / entity / utility, tầng tích hợp
 (API Gateway đóng vai trò ESB nhẹ + Service Registry) và lớp consumer (giao diện web, client SOAP).
 Đối chiếu chi tiết với nguyên tắc SOA: [soa.md](soa.md).
 
@@ -24,6 +24,7 @@ flowchart TB
         PAY["entity: payment-service :8006"] --- DB6[("payment_db")]
         PROMO["entity: promotion-service :8007"] --- DB7[("promotion_db")]
         NOTI["utility: notification-service :8008"] --- DB8[("notification_db")]
+        AIS["utility: ai-service :8009"] --- DB9[("ai_db")]
     end
     SVC <-->|"publish / consume sự kiện"| MQ{{"RabbitMQ<br/>exchange grocery.events"}}
 ```
@@ -55,6 +56,7 @@ Giao tiếp **đồng bộ** (REST nội bộ, có `X-Internal-Token`; địa ch
 | **payment-service** | Giao dịch COD / chuyển khoản / ví điện tử (mô phỏng) / tiền mặt; hoàn tiền | `payments`, `payment_logs` |
 | **promotion-service** | Mã giảm giá: điều kiện, giới hạn lượt, ghi nhận & hoàn lượt | `coupons`, `coupon_usages` |
 | **notification-service** | Thông báo trong app và email (mô phỏng), chỉ lắng nghe sự kiện | `notifications`, `notification_reads`, `email_logs` |
+| **ai-service** | Gợi ý "thường mua cùng", trợ lý mua sắm bằng chat và lập thực đơn từ bữa ăn khách nhập (danh sách đi chợ khớp sản phẩm thật); mô hình tự huấn luyện (thư mục `ml/`) chạy trong service, hoặc API LLM ngoài tùy chọn (Gemini/Anthropic, tự chuyển về mô hình cục bộ khi API lỗi). Chỉ đọc dữ liệu qua product-service, học thói quen mua chung từ sự kiện | `co_purchases`, `ai_recommendations`, `ai_requests` |
 
 ## 2. Các mẫu kiến trúc (patterns) được áp dụng
 
@@ -138,7 +140,7 @@ Thanh toán ví điện tử là bất đồng bộ: `payment-service` phát `pa
 | `order.created` | order | notification | Thông báo khách + email xác nhận + báo nhân viên có đơn mới |
 | `order.status_changed` | order | notification | Thông báo khách khi đơn đổi trạng thái |
 | `order.cancelled` | order | notification | Thông báo khách + nhân viên |
-| `order.completed` | order | product | Cộng số lượng đã bán (sắp xếp "bán chạy") |
+| `order.completed` | order | product, ai | Product cộng số lượng đã bán (sắp xếp "bán chạy"); ai đếm các cặp sản phẩm cùng đơn để gợi ý mua kèm sát thực tế |
 | `payment.completed` | payment | order, notification | Đánh dấu đã thanh toán, tự xác nhận đơn online |
 | `payment.failed` | payment | notification | Báo khách thanh toán chưa thành công |
 | `payment.refunded` | payment | order, notification | Cập nhật trạng thái hoàn tiền |
@@ -160,8 +162,8 @@ Cấu trúc message: `{"id", "type", "source", "occurred_at", "data": {...}}`. M
 
 ## 6. Chạy & mở rộng
 
-- **Docker Compose**: PostgreSQL 16 (8 database), RabbitMQ 3.13, Service Registry, 8 service + gateway (gunicorn), nginx.
-- **Local**: `run_local.py` chạy registry, 8 service và gateway, SQLite riêng cho từng service, event bus qua HTTP (gửi tới một instance mỗi service theo registry).
+- **Docker Compose**: PostgreSQL 16 (9 database), RabbitMQ 3.13, Service Registry, 9 service + gateway (gunicorn), nginx (14 container).
+- **Local**: `run_local.py` chạy registry, 9 service và gateway, SQLite riêng cho từng service, event bus qua HTTP (gửi tới một instance mỗi service theo registry).
 - Mỗi service stateless nên scale ngang được: `docker compose up -d --scale product-service=3`. Instance mới tự đăng ký
   vào registry, gateway và các service tự chia tải; với RabbitMQ các instance cùng service dùng chung một queue
   (competing consumers) nên mỗi sự kiện chỉ xử lý một lần. Khởi tạo bảng và dữ liệu mẫu dùng advisory lock của

@@ -34,6 +34,7 @@ SERVICES = [
     ("entity/payment-service", 8006),
     ("entity/promotion-service", 8007),
     ("utility/notification-service", 8008),
+    ("utility/ai-service", 8009),
 ]
 REGISTRY_PORT = 8500
 

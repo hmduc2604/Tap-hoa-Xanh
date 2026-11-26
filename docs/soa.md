@@ -35,7 +35,7 @@ Các phần sau đã được bổ sung:
 |---|---|---|
 | **Task service** | `services/task/order-service` | Hiện thực quy trình nghiệp vụ "bán hàng": đặt hàng online, POS, vòng đời đơn; không sở hữu thực thể nào khác ngoài đơn hàng, mà điều phối các entity service |
 | **Entity service** | `services/entity/auth-service`, `product-service`, `inventory-service`, `cart-service`, `payment-service`, `promotion-service` | Mỗi service quản lý một thực thể nghiệp vụ và được tái sử dụng bởi nhiều quy trình |
-| **Utility service** | `services/utility/notification-service` | Năng lực dùng chung không gắn nghiệp vụ (thông báo, email), chỉ lắng nghe sự kiện |
+| **Utility service** | `services/utility/notification-service`, `ai-service` | Năng lực dùng chung không gắn nghiệp vụ: thông báo, email (chỉ lắng nghe sự kiện); gợi ý, trợ lý chat và lập thực đơn AI (chỉ đọc dữ liệu, học từ sự kiện) |
 | **Tầng tích hợp** | `integration/gateway`, `integration/registry` | ESB nhẹ (định tuyến, bảo mật, dàn xếp giao thức, biến đổi message) và danh bạ dịch vụ |
 
 Lớp của mỗi service được ghi trong code (`create_base_app(layer=...)`), trong hợp đồng (`info.x-service-layer`),
@@ -45,15 +45,15 @@ trong health check và trong bản ghi registry.
 
 | Lớp SOA RA | Thành phần trong project |
 |---|---|
-| 1. Operational Systems | PostgreSQL 16 (8 database), RabbitMQ 3.13 |
+| 1. Operational Systems | PostgreSQL 16 (9 database), RabbitMQ 3.13 |
 | 2. Service Components | Mã nguồn Flask của từng service trong `services/<lớp>/<service>/app.py` |
-| 3. Services | 8 service nghiệp vụ, hợp đồng OpenAPI trong `contracts/openapi/`, WSDL trong `contracts/wsdl/` |
+| 3. Services | 9 service (8 nghiệp vụ + ai-service), hợp đồng OpenAPI trong `contracts/openapi/`, WSDL trong `contracts/wsdl/` |
 | 4. Business Process | Saga đặt hàng, bán tại quầy, vòng đời đơn trong order-service; luồng sự kiện order/payment/inventory |
 | 5. Consumer | Giao diện cửa hàng, trang quản trị, POS (`frontend/`); client SOAP bất kỳ đọc được WSDL |
 | 6. Integration | API Gateway (ESB nhẹ), RabbitMQ (event bus), Service Registry |
 | 7. Quality of Service | JWT, X-Internal-Token, rate limit, circuit breaker, timeout/retry, health check, X-Request-ID, dead letter queue |
 | 8. Information | Database per service, dữ liệu sản phẩm nhân bản sang kho qua sự kiện, idempotent consumer |
-| 9. Governance | Hợp đồng sinh từ code + `scripts/export_contracts.py --check`, phiên bản API `/api/v1`, danh bạ dịch vụ, 168 kiểm thử end-to-end |
+| 9. Governance | Hợp đồng sinh từ code + `scripts/export_contracts.py --check`, phiên bản API `/api/v1`, danh bạ dịch vụ, 197 kiểm thử end-to-end |
 
 ## 5. Các thành phần SOA kinh điển
 
@@ -126,4 +126,4 @@ curl -X POST http://localhost:8080/api/soap/catalog -H "Content-Type: text/xml; 
 </soap:Envelope>'
 ```
 
-6. `python tests/e2e_test.py`: 168 kiểm thử, trong đó có nhóm "SOA: Service Registry", "SOA: Hợp đồng dịch vụ", "SOA: ESB — SOAP/WSDL ↔ REST".
+6. `python tests/e2e_test.py`: 197 kiểm thử, trong đó có nhóm "SOA: Service Registry", "SOA: Hợp đồng dịch vụ", "SOA: ESB — SOAP/WSDL ↔ REST".

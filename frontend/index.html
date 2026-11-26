@@ -6,6 +6,7 @@
   <title>Tạp Hóa Xanh — đi chợ online</title>
   <meta name="description" content="Tạp hóa gần nhà: gạo, mì, gia vị, sữa, rau củ tươi. Đặt online, giao trong 2 giờ.">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧺</text></svg>">
+  <script src="/assets/js/theme.js"></script>
   <link rel="stylesheet" href="/assets/css/base.css">
   <link rel="stylesheet" href="/assets/css/store.css">
 </head>
@@ -14,7 +15,7 @@
     <section class="hero">
       <div>
         <h1>Đi chợ không cần ra chợ</h1>
-        <p class="lead">Hơn 50 mặt hàng thiết yếu từ gạo, nước mắm đến rau củ trong ngày. Đặt trước 20:00, giao trong 2 giờ.</p>
+        <p class="lead">Hơn 500 mặt hàng từ gạo, nước mắm đến rau củ, thịt cá tươi trong ngày. Đặt trước 20:00, giao trong 2 giờ.</p>
         <div class="actions">
           <a class="btn lg" href="#catalog">Xem hàng trên kệ</a>
           <a class="btn lg secondary" href="#" id="sale-link">Đang giảm giá</a>
@@ -24,6 +25,19 @@
         <h2 id="deals-title">Giảm giá hôm nay <a href="#" id="all-deals">Xem tất cả</a></h2>
         <div id="deals"><div class="spinner"></div></div>
       </aside>
+    </section>
+
+    <section class="meal-band" aria-labelledby="meal-band-title">
+      <div>
+        <h2 id="meal-band-title">Hôm nay ăn gì? <span class="ai-tag">AI</span></h2>
+        <p>Nhập bữa ăn muốn nấu, mình lên món và danh sách đi chợ theo ngân sách. Thêm cả giỏ chỉ một lần bấm.</p>
+      </div>
+      <form class="meal-band-form" action="/meal.html" method="get">
+        <label class="sr-only" for="band-q">Bữa ăn muốn nấu</label>
+        <input id="band-q" name="m" maxlength="300" placeholder="Ví dụ: bữa tối cho 4 người, khoảng 200k" required>
+        <input type="hidden" name="go" value="1">
+        <button class="btn yellow" type="submit">Lên thực đơn</button>
+      </form>
     </section>
 
     <section aria-label="Mã giảm giá" id="coupon-section" class="hidden" style="margin-bottom:1.4rem">
@@ -72,5 +86,6 @@
   <script src="/assets/js/core.js"></script>
   <script src="/assets/js/shop.js"></script>
   <script src="/assets/js/home.js"></script>
+  <script src="/assets/js/assistant.js"></script>
 </body>
 </html>

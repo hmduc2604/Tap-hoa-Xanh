@@ -5,6 +5,8 @@ Lưu bản sao (replica) tên/SKU sản phẩm, đồng bộ qua sự kiện pro
 """
 import os
 import sys
+import threading
+import time
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
 if os.path.isdir(os.path.join(ROOT, "common")) and ROOT not in sys.path:
@@ -606,9 +608,59 @@ def seed():
     app.logger.info("Đã tạo tồn kho đầu kỳ cho %s sản phẩm", len(PRODUCTS))
 
 
+def reconcile_catalog(max_wait=900):
+    """Đồng bộ kho với danh mục sản phẩm đang có (chạy nền một lần khi khởi động).
+
+    Cơ sở dữ liệu cũ được product-service bổ sung sản phẩm mới theo seed_data (không có sự kiện product.created vì
+    nạp trực tiếp). Hàm này hỏi product-service danh sách sản phẩm, rồi tạo bản ghi tồn kho còn thiếu: sản phẩm thuộc
+    seed_data lấy tồn đầu kỳ trong seed_data, sản phẩm khác bắt đầu từ 0. Chạy lại bao nhiêu lần cũng không trùng."""
+    seeded = {p[1]: p for p in PRODUCTS}
+    deadline = time.time() + max_wait
+    delay = 2
+    while time.time() < deadline:
+        try:
+            added, page = 0, 1
+            while True:
+                data = products_client.get("/api/products", params={"page": page, "page_size": 100, "sort": "newest"})
+                items = data["items"]
+                have = {r["product_id"] for r in db.query(
+                    f"SELECT product_id FROM stocks WHERE product_id IN ({','.join('?' * len(items))})",
+                    [p["id"] for p in items])} if items else set()
+                fresh = [p for p in items if p["id"] not in have]
+                if fresh:
+                    ts = now_str()
+                    with db.tx() as cur:
+                        cur.lock("reconcile")
+                        for p in fresh:
+                            if cur.scalar("SELECT COUNT(*) AS n FROM stocks WHERE product_id = ?", (p["id"],)):
+                                continue
+                            row = seeded.get(p["sku"])
+                            stock, min_q = (row[8], row[9]) if row else (0, 10)
+                            cur.execute(
+                                "INSERT INTO stocks (product_id, sku, product_name, unit, search_text, quantity, reserved, "
+                                "min_quantity, is_active, low_stock_alerted, updated_at) VALUES (?, ?, ?, ?, ?, ?, 0, ?, 1, ?, ?)",
+                                (p["id"], p["sku"], p["name"], p["unit"], strip_accents(f"{p['name']} {p['sku']}"), stock, min_q,
+                                 1 if stock <= min_q else 0, ts))
+                            if stock:
+                                record_movement(cur, p["id"], "INITIAL", stock, "SEED", None, "Tồn đầu kỳ", "system")
+                            added += 1
+                if page * 100 >= data.get("total", 0):
+                    break
+                page += 1
+            if added:
+                app.logger.info("Đã tạo tồn kho cho %s sản phẩm mới trong danh mục", added)
+            return added
+        except Exception as exc:  # product-service chưa sẵn sàng: thử lại
+            app.logger.debug("reconcile_catalog chờ product-service: %s", exc)
+            time.sleep(delay)
+            delay = min(delay * 2, 30)
+    app.logger.warning("Không đồng bộ được kho với danh mục sau %ss", max_wait)
+
+
 def create_app():
     db.init_schema(SCHEMA)
     seed()
+    threading.Thread(target=reconcile_catalog, daemon=True, name="reconcile-catalog").start()
     bus.init_app(app)
     register_service(app, "inventory", 8003)
     return app
