@@ -17,7 +17,7 @@ qs('#logout').addEventListener('click', (e) => { e.preventDefault(); logout(); }
 
 /* ================================================================ tiện ích giao diện */
 function page(title, actions = '') {
-  $view.innerHTML = `<div class="topbar"><h1>${esc(title)}</h1><div class="actions">${actions}</div></div><div id="content"><div class="spinner"></div></div>`;
+  $view.innerHTML = `<div class="topbar"><h1>${esc(title)}</h1><div class="actions">${actions}${Theme.buttonHtml()}</div></div><div id="content"><div class="spinner"></div></div>`;
   document.title = `${title} — Quản trị Tạp Hóa Xanh`;
   return qs('#content');
 }
@@ -53,7 +53,7 @@ function barChart(days) {
       ${d.revenue && days.length <= 16 ? `<text class="val" x="${x + bw / 2}" y="${y - 6}" text-anchor="middle">${compact(d.revenue)}</text>` : ''}
       <text x="${x + bw / 2}" y="${H - 8}" text-anchor="middle">${label}</text></g>`;
   }).join('');
-  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Biểu đồ doanh thu theo ngày"><line x1="0" x2="${W}" y1="${H - bottom}" y2="${H - bottom}" stroke="#DDE3DA"/>${bars}</svg>`;
+  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Biểu đồ doanh thu theo ngày"><line x1="0" x2="${W}" y1="${H - bottom}" y2="${H - bottom}" class="axis"/>${bars}</svg>`;
 }
 
 /* Form tạo / sửa dùng chung. field: {name, label, type, options, required, full, hint, min, step, placeholder} */

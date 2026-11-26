@@ -5,26 +5,27 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Hợp đồng dịch vụ — Tạp Hóa Xanh</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧺</text></svg>">
+  <script src="/assets/js/theme.js"></script>
   <link rel="stylesheet" href="/assets/css/base.css">
   <link rel="stylesheet" href="/assets/css/store.css">
   <style>
     .docs { display: grid; grid-template-columns: 280px 1fr; gap: 1.6rem; align-items: start; }
-    .svc-list { position: sticky; top: 92px; display: grid; gap: 1rem; }
+    .svc-list { position: sticky; top: 96px; display: grid; gap: 1rem; }
     .svc-list h3 { font-size: 1rem; margin: 0 0 .35rem; color: var(--muted); font-family: var(--font-body); font-weight: 600; }
     .svc-list button { display: flex; justify-content: space-between; align-items: center; width: 100%; text-align: left; border: 1.5px solid var(--line);
-      background: #fff; border-radius: var(--r-sm); padding: .55rem .7rem; font: 600 .9rem var(--font-body); color: var(--ink); cursor: pointer; margin-bottom: .35rem; }
+      background: var(--surface); border-radius: var(--r-sm); padding: .55rem .7rem; font: 600 .9rem var(--font-body); color: var(--ink); cursor: pointer; margin-bottom: .35rem; }
     .svc-list button[aria-pressed=true] { border-color: var(--leaf); background: var(--leaf-soft); }
     .svc-list .n { color: var(--muted); font-weight: 500; font-size: .8rem; }
-    .op { display: grid; grid-template-columns: 70px 1fr auto; gap: .2rem .8rem; align-items: baseline; padding: .6rem .2rem; border-bottom: 1px solid #EEF2EC; }
+    .op { display: grid; grid-template-columns: 70px 1fr auto; gap: .2rem .8rem; align-items: baseline; padding: .6rem .2rem; border-bottom: 1px solid var(--line-soft); }
     .op:last-child { border-bottom: 0; }
     .verb { font: 700 .78rem var(--font-body); padding: .2rem .4rem; border-radius: 4px; text-align: center; color: #fff; }
-    .verb.get { background: var(--sky); } .verb.post { background: var(--leaf); } .verb.put { background: var(--amber); } .verb.delete { background: var(--chili); }
+    .verb.get { background: var(--sky-fill); } .verb.post { background: var(--leaf); } .verb.put { background: var(--amber-fill); } .verb.delete { background: var(--chili-fill); }
     .op code { font-size: .88rem; word-break: break-all; }
     .op .sum { grid-column: 2 / -1; color: var(--muted); font-size: .88rem; }
-    .access { font-size: .74rem; font-weight: 600; padding: .15rem .5rem; border-radius: 999px; background: var(--leaf-soft); color: var(--leaf-deep); white-space: nowrap; }
+    .access { font-size: .74rem; font-weight: 600; padding: .15rem .5rem; border-radius: 999px; background: var(--leaf-soft); color: var(--on-soft); white-space: nowrap; }
     .access.authenticated { background: var(--sky-soft); color: var(--sky); }
-    .access.roles { background: var(--tag-soft); color: #8a6a00; }
-    pre.xml { background: var(--leaf-deep); color: #E9F4EB; padding: 1rem; border-radius: var(--r-md); overflow: auto; font-size: .8rem; max-height: 340px; white-space: pre-wrap; }
+    .access.roles { background: var(--tag-soft); color: var(--tag-text); }
+    pre.xml { background: var(--chrome); color: var(--chrome-ink); border: 1px solid var(--line); padding: 1rem; border-radius: var(--r-md); overflow: auto; font-size: .8rem; max-height: 340px; white-space: pre-wrap; }
     .tag-group h3 { margin: 1.1rem 0 .3rem; font-size: 1.1rem; }
     .meta-row { display: flex; gap: .5rem; flex-wrap: wrap; align-items: center; margin-bottom: .8rem; }
     @media (max-width: 860px) { .docs { grid-template-columns: 1fr; } .svc-list { position: static; } }

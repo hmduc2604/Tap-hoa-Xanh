@@ -1,10 +1,13 @@
 """Dữ liệu mẫu (chỉ dùng để khởi tạo demo).
 
-product-service tạo danh mục + sản phẩm theo đúng thứ tự dưới đây (id 1..N),
+Gồm 55 sản phẩm gốc ngay trong file này (BASE_PRODUCTS, id 1..55) và ~540 sản phẩm bổ sung sinh từ common/catalog/
+(EXTRA_PRODUCTS, nối tiếp phía sau). product-service tạo danh mục + sản phẩm theo đúng thứ tự PRODUCTS; khi cơ sở dữ liệu
+đã có dữ liệu cũ, các sản phẩm mới được bổ sung theo SKU mà không đụng tới dữ liệu đang có (xem seed() ở từng service).
 inventory-service tạo tồn kho đầu kỳ cho các sản phẩm tương ứng.
 """
+from common.catalog import EXTRA_CATEGORIES, all_blocks, build
 
-CATEGORIES = [
+BASE_CATEGORIES = [
     # (tên, icon, mô tả)
     ("Gạo & Ngũ cốc", "🍚", "Gạo các loại, nếp, yến mạch, ngũ cốc dinh dưỡng"),
     ("Mì, Bún & Đồ khô", "🍜", "Mì gói, phở, bún khô, miến, nấm khô"),
@@ -19,7 +22,7 @@ CATEGORIES = [
 ]
 
 # (chỉ số danh mục, sku, barcode, tên, thương hiệu, đơn vị, giá, giá KM, tồn đầu, tồn tối thiểu, mô tả)
-PRODUCTS = [
+BASE_PRODUCTS = [
     (0, "GAO-ST25-5", "8930000000011", "Gạo ST25 Sóc Trăng túi 5kg", "ST25", "túi 5kg", 195000, 179000, 40, 10,
      "Gạo ST25 hạt dài, dẻo thơm, từng đạt giải gạo ngon nhất thế giới."),
     (0, "GAO-JAS-5", "8930000000028", "Gạo Jasmine thơm túi 5kg", "Vinh Hiển", "túi 5kg", 135000, None, 35, 10,
@@ -140,3 +143,32 @@ PRODUCTS = [
     (9, "GIAY-VS-10", "8930000000554", "Giấy vệ sinh 3 lớp lốc 10 cuộn", "Pulppy", "lốc 10 cuộn", 75000, None, 30, 8,
      "Giấy vệ sinh mềm mịn, không bụi giấy."),
 ]
+
+
+# nhóm hàng của 55 sản phẩm gốc (nhóm của sản phẩm bổ sung nằm trong common/catalog/)
+_BASE_KIND = {
+    "GAO-ST25-5": "gao", "GAO-JAS-5": "gao", "NEP-CAI-2": "gao_nep", "YM-QUAKER-500": "yen_mach", "NC-VD-500": "ngu_coc",
+    "MI-HH-THUNG": "mi_goi", "MI-HH-GOI": "mi_goi", "PHO-VIFON": "pho_an_lien", "BUN-KHO-500": "bun_pho_kho",
+    "MIEN-DONG-200": "mien", "NAM-HUONG-100": "nam_kho", "NM-NAMNGU-750": "nuoc_mam", "NM-PQ-500": "nuoc_mam",
+    "NT-MAGGI-700": "nuoc_tuong", "HN-KNORR-400": "hat_nem", "BN-AJI-400": "hat_nem", "DUONG-BH-1KG": "duong",
+    "MUOI-IOT-500": "muoi", "TUONG-OT-250": "tuong_ot", "DA-NEPTUNE-1L": "dau_an", "DA-SIMPLY-1L": "dau_an",
+    "CA-HOP-3CG": "ca_hop", "PATE-HL-150": "thit_hop", "SUA-VNM-1L": "sua_tuoi", "SUA-TH-LOC4": "sua_tuoi",
+    "SC-VNM-LOC4": "sua_chua", "SUA-DAC-OT": "sua_dac", "PHOMAI-CBC": "pho_mai_bo", "COCA-LON": "nuoc_ngot",
+    "COCA-THUNG": "nuoc_ngot", "AQUA-500": "nuoc_suoi", "TRA-0DO": "tra", "CF-G7-18": "ca_phe", "BIA-SG-LON": "bia",
+    "CHOCOPIE-12": "banh_ngot", "LAYS-52": "snack", "COSY-BO-300": "banh_quy", "KEO-ALPEN": "keo", "BANHGAO-ONE": "banh_gao",
+    "RAU-MUONG": "rau_la", "CA-CHUA-1KG": "cu_qua", "KHOAI-TAY-1KG": "cu_qua", "CHUOI-1KG": "trai_cay",
+    "TAO-ENVY-1KG": "trai_cay", "CAM-SANH-1KG": "trai_cay", "TRUNG-GA-10": "trung", "BA-ROI-500": "thit_heo",
+    "UC-GA-500": "thit_ga_vit", "TOM-THE-500": "hai_san", "CA-BASA-500": "ca_tuoi", "OMO-36": "giat_giu",
+    "SUNLIGHT-750": "rua_chen", "CLEAR-630": "dau_goi", "PS-230": "kem_danh_rang", "GIAY-VS-10": "giay",
+}
+
+EXTRA_PRODUCTS, _EXTRA_KIND, KINDS = build(all_blocks(), first_category_index=len(BASE_CATEGORIES), start_seq=0)
+
+CATEGORIES = BASE_CATEGORIES + EXTRA_CATEGORIES
+PRODUCTS = BASE_PRODUCTS + EXTRA_PRODUCTS
+KIND_OF = {**_BASE_KIND, **_EXTRA_KIND}
+
+assert len({p[1] for p in PRODUCTS}) == len(PRODUCTS), "SKU bị trùng"
+assert len({p[2] for p in PRODUCTS}) == len(PRODUCTS), "mã vạch bị trùng"
+assert len({p[3] for p in PRODUCTS}) == len(PRODUCTS), "tên sản phẩm bị trùng"
+assert set(KIND_OF) == {p[1] for p in PRODUCTS}, "thiếu nhóm hàng cho sản phẩm"

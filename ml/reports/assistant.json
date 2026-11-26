@@ -1,0 +1,64 @@
+{
+ "train": {
+  "samples": 1500,
+  "accuracy": 1.0,
+  "macro_f1": 1.0,
+  "answered_ratio": 1.0,
+  "accuracy_when_answered": 1.0
+ },
+ "test": {
+  "samples": 2100,
+  "accuracy": 0.8276,
+  "macro_f1": 0.8381,
+  "answered_ratio": 0.9005,
+  "accuracy_when_answered": 0.8805
+ },
+ "handwritten": {
+  "samples": 43,
+  "accuracy": 0.9535,
+  "macro_f1": 0.966,
+  "answered_ratio": 1.0,
+  "accuracy_when_answered": 0.9535
+ },
+ "slots": {
+  "dish_accuracy": 1.0,
+  "servings_accuracy": 0.9762,
+  "price_accuracy": 0.9904,
+  "product_top1": 0.9244,
+  "product_top3": 0.94,
+  "samples": {
+   "dish": 150,
+   "servings": 42,
+   "price": 104,
+   "product": 450
+  }
+ },
+ "per_class_f1": {
+  "about_bot": 0.64,
+  "bought_together": 0.966,
+  "budget": 0.958,
+  "find_product": 0.531,
+  "goodbye": 1.0,
+  "greeting": 0.755,
+  "meal_suggest": 0.881,
+  "order_help": 0.971,
+  "out_of_scope": 0.792,
+  "price_query": 0.917,
+  "promotion": 0.811,
+  "recipe": 0.753,
+  "store_info": 0.759,
+  "thanks": 1.0
+ },
+ "handwritten_wrong": [
+  [
+   "bạn biết đá bóng không",
+   "out_of_scope",
+   "find_product"
+  ],
+  [
+   "bitcoin có nên mua không",
+   "out_of_scope",
+   "find_product"
+  ]
+ ]
+}

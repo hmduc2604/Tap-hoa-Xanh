@@ -27,6 +27,7 @@ SERVICE_LABELS = {
     "payment": "Thanh toán",
     "promotion": "Khuyến mãi",
     "notification": "Thông báo",
+    "ai": "Trợ lý AI",
 }
 
 

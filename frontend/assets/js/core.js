@@ -76,11 +76,22 @@ const stars = (n) => '★'.repeat(Math.round(n || 0)) + '☆'.repeat(5 - Math.ro
 
 /* ô ảnh sản phẩm: dùng ảnh nếu có, không thì biểu tượng danh mục trên nền màu theo danh mục */
 function thumb(p, cls = '') {
-  const bg = p.category_id ? `hsl(${(p.category_id * 47) % 360} 55% 92%)` : 'var(--leaf-soft)';
+  const hue = p.category_id ? (p.category_id * 47) % 360 : 140; // nền ô ảnh theo danh mục (CSS đổi độ sáng theo giao diện sáng/tối)
   const icon = p.category_icon || '🛒';
-  const inner = p.image_url ? `<img src="${esc(p.image_url)}" alt="" loading="lazy">` : `<span aria-hidden="true">${icon}</span>`;
-  return `<div class="thumb ${cls}" style="background:${bg}">${inner}</div>`;
+  // ảnh bao bì (Open Food Facts) giữ nguyên tỉ lệ; ảnh minh họa khác phủ kín ô. Ảnh lỗi thì quay về biểu tượng danh mục.
+  const pack = /openfoodfacts/.test(p.image_url || '') ? ' class="pack"' : '';
+  const inner = p.image_url
+    ? `<img src="${esc(p.image_url)}" alt="${esc(p.name || '')}"${pack} loading="lazy" referrerpolicy="no-referrer" onerror="this.replaceWith(Object.assign(document.createElement('span'),{textContent:'${icon}'}))">`
+    : `<span aria-hidden="true">${icon}</span>`;
+  return `<div class="thumb ${cls}" style="--h:${hue}">${inner}</div>`;
 }
+
+/* khung xương cho lưới sản phẩm khi đang tải */
+const skeletonCards = (n = 8) => Array.from({ length: n }, () => `
+  <div class="card skeleton" aria-hidden="true">
+    <div class="thumb skel"></div><div class="skel" style="height:1rem;width:90%"></div><div class="skel" style="height:1rem;width:55%"></div>
+    <div class="price-row"><div class="skel" style="height:1.7rem;width:5.2rem"></div><div class="skel" style="height:2.5rem;width:2.5rem;border-radius:50%"></div></div>
+  </div>`).join('');
 
 const STATUS = {
   PENDING: 'Chờ xác nhận', CONFIRMED: 'Đã xác nhận', SHIPPING: 'Đang giao', DELIVERED: 'Đã giao',

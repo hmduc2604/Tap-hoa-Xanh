@@ -12,6 +12,7 @@ SERVICE_DEFAULTS = {
     "payment": "http://localhost:8006",
     "promotion": "http://localhost:8007",
     "notification": "http://localhost:8008",
+    "ai": "http://localhost:8009",
     "registry": "http://localhost:8500",
 }
 
@@ -36,7 +37,10 @@ def env_bool(name, default=False):
 
 
 def service_url(name):
-    return env(f"{name.upper()}_SERVICE_URL", SERVICE_DEFAULTS[name]).rstrip("/")
+    default = SERVICE_DEFAULTS[name]
+    if name == "registry":  # registry dùng chung biến REGISTRY_URL với client đăng ký
+        default = env("REGISTRY_URL", default)
+    return env(f"{name.upper()}_SERVICE_URL", default).rstrip("/")
 
 
 JWT_SECRET = env("JWT_SECRET", "dev-jwt-secret-change-me")

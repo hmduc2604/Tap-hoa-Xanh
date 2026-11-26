@@ -250,6 +250,57 @@
         "x-access": "authenticated"
       }
     },
+    "/api/cart/items/bulk": {
+      "post": {
+        "operationId": "add_items_bulk",
+        "summary": "Thêm nhiều sản phẩm vào giỏ trong một lần (dùng cho danh sách đi chợ của thực đơn AI)",
+        "tags": [
+          "cart"
+        ],
+        "responses": {
+          "200": {
+            "description": "Thành công",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Tạo thành công",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "$ref": "#/components/responses/ClientError"
+          }
+        },
+        "description": "Gửi `items`: [{product_id, quantity}], tối đa 30 dòng; trùng sản phẩm thì cộng dồn số lượng. Mỗi dòng được kiểm tra riêng\nnhư `POST /api/cart/items`, dòng lỗi (hết hàng, ngừng bán) không làm hỏng các dòng còn lại. Kho không đủ thì chỉ thêm phần còn lại.\nPhản hồi: `added` (đã thêm đủ), `adjusted` (chỉ thêm được một phần, kèm `requested` và `added`), `failed` (không thêm được, kèm `reason`)\nvà `cart` (giỏ hàng sau khi thêm).",
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-access": "authenticated"
+      }
+    },
     "/contract": {
       "get": {
         "operationId": "_contract",

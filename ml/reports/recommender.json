@@ -1,0 +1,106 @@
+{
+ "data": {
+  "source": "synthetic",
+  "baskets": 30000,
+  "split": [
+   21000,
+   4500,
+   4500
+  ]
+ },
+ "weights": {
+  "mlp": 0.25,
+  "conf": 0.25
+ },
+ "alpha": 0.5,
+ "results": {
+  "popularity (baseline)": {
+   "validation": {
+    "hit@4": 0.341,
+    "precision@4": 0.1117,
+    "coverage": 0.0084,
+    "same_kind@4": 0.0
+   },
+   "test": {
+    "hit@4": 0.3426,
+    "precision@4": 0.1121,
+    "coverage": 0.0084,
+    "same_kind@4": 0.0,
+    "completion@4": 0.0673
+   }
+  },
+  "xác suất có điều kiện": {
+   "validation": {
+    "hit@4": 0.4211,
+    "precision@4": 0.1411,
+    "coverage": 0.3244,
+    "same_kind@4": 0.0
+   },
+   "test": {
+    "hit@4": 0.4294,
+    "precision@4": 0.1434,
+    "coverage": 0.3244,
+    "same_kind@4": 0.0,
+    "completion@4": 0.1367
+   }
+  },
+  "lift": {
+   "validation": {
+    "hit@4": 0.258,
+    "precision@4": 0.0786,
+    "coverage": 0.811,
+    "same_kind@4": 0.0
+   },
+   "test": {
+    "hit@4": 0.2612,
+    "precision@4": 0.079,
+    "coverage": 0.811,
+    "same_kind@4": 0.0
+   }
+  },
+  "embedding PPMI-SVD": {
+   "validation": {
+    "hit@4": 0.2005,
+    "precision@4": 0.0613,
+    "coverage": 0.7659,
+    "same_kind@4": 0.0
+   },
+   "test": {
+    "hit@4": 0.2034,
+    "precision@4": 0.062,
+    "coverage": 0.7659,
+    "same_kind@4": 0.0
+   }
+  },
+  "mạng nơ-ron MLP": {
+   "validation": {
+    "hit@4": 0.4112,
+    "precision@4": 0.1359,
+    "coverage": 0.2291,
+    "same_kind@4": 0.0
+   },
+   "test": {
+    "hit@4": 0.423,
+    "precision@4": 0.1394,
+    "coverage": 0.2291,
+    "same_kind@4": 0.0,
+    "completion@4": 0.1702
+   }
+  },
+  "pha trộn (mô hình dùng)": {
+   "validation": {
+    "hit@4": 0.4084,
+    "precision@4": 0.135,
+    "coverage": 0.3411,
+    "same_kind@4": 0.0
+   },
+   "test": {
+    "hit@4": 0.4199,
+    "precision@4": 0.1382,
+    "coverage": 0.3411,
+    "same_kind@4": 0.0,
+    "completion@4": 0.1642
+   }
+  }
+ }
+}

@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Giỏ hàng — Tạp Hóa Xanh</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧺</text></svg>">
+  <script src="/assets/js/theme.js"></script>
   <link rel="stylesheet" href="/assets/css/base.css">
   <link rel="stylesheet" href="/assets/css/store.css">
 </head>
@@ -16,6 +17,10 @@
         <section class="panel" aria-labelledby="items-title">
           <h2 id="items-title">Sản phẩm</h2>
           <div id="items"><div class="spinner"></div></div>
+        </section>
+        <section class="panel hidden" id="together-panel" aria-labelledby="together-title">
+          <h2 id="together-title">Có thể bạn cần thêm<span class="together-badge"></span></h2>
+          <div class="related together-list"></div>
         </section>
         <section class="panel" id="shipping-panel" aria-labelledby="ship-title">
           <h2 id="ship-title">Giao đến</h2>
@@ -40,7 +45,7 @@
           </div>
         </section>
       </div>
-      <aside class="panel" style="position:sticky;top:92px" aria-labelledby="sum-title">
+      <aside class="panel" style="position:sticky;top:96px" aria-labelledby="sum-title">
         <h2 id="sum-title">Đơn hàng</h2>
         <label class="field" for="coupon">Mã giảm giá</label>
         <div class="coupon-row" style="margin-top:.3rem">
@@ -58,5 +63,6 @@
   <script src="/assets/js/core.js"></script>
   <script src="/assets/js/shop.js"></script>
   <script src="/assets/js/cart.js"></script>
+  <script src="/assets/js/assistant.js"></script>
 </body>
 </html>

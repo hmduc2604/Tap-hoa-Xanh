@@ -16,6 +16,7 @@ from common.utils import get_json, now_str, to_int  # noqa: E402
 
 SERVICE = "cart-service"
 MAX_QTY = 99
+MAX_BULK = 30
 db = Database(default_sqlite="data/cart.db")
 bus = EventBus(SERVICE, db)
 app = create_base_app(SERVICE, db, layer="entity",
@@ -132,6 +133,62 @@ def add_item():
         "ON CONFLICT (user_id, product_id) DO UPDATE SET quantity = excluded.quantity, updated_at = excluded.updated_at",
         (uid, pid, new_qty, ts, ts))
     return build_cart(uid), 201
+
+
+@app.post("/api/cart/items/bulk")
+@require_auth
+def add_items_bulk():
+    """Thêm nhiều sản phẩm vào giỏ trong một lần (dùng cho danh sách đi chợ của thực đơn AI)
+
+Gửi `items`: [{product_id, quantity}], tối đa 30 dòng; trùng sản phẩm thì cộng dồn số lượng. Mỗi dòng được kiểm tra riêng
+như `POST /api/cart/items`, dòng lỗi (hết hàng, ngừng bán) không làm hỏng các dòng còn lại. Kho không đủ thì chỉ thêm phần còn lại.
+Phản hồi: `added` (đã thêm đủ), `adjusted` (chỉ thêm được một phần, kèm `requested` và `added`), `failed` (không thêm được, kèm `reason`)
+và `cart` (giỏ hàng sau khi thêm)."""
+    uid = current_user()["id"]
+    raw = get_json().get("items")
+    if not isinstance(raw, list) or not raw:
+        raise bad_request("Thiếu danh sách sản phẩm cần thêm")
+    if len(raw) > MAX_BULK:
+        raise bad_request(f"Mỗi lần chỉ thêm tối đa {MAX_BULK} sản phẩm")
+    wanted = {}
+    for row in raw:
+        if not isinstance(row, dict):
+            raise bad_request("Dòng sản phẩm không hợp lệ")
+        pid = to_int(row.get("product_id"), "product_id", minimum=1, required=True)
+        qty = to_int(row.get("quantity"), "quantity", minimum=1, maximum=MAX_QTY, default=1)
+        wanted[pid] = min(MAX_QTY, wanted.get(pid, 0) + qty)
+    ids = list(wanted)
+    products = {p["id"]: p for p in products_client.post("/internal/products/batch", json={"ids": ids})["items"]}
+    stock = inventory_client.post("/internal/inventory/availability", json={"product_ids": ids})["items"]
+    in_cart = {r["product_id"]: r["quantity"] for r in raw_items(uid)}
+    added, adjusted, failed = [], [], []
+    ts = now_str()
+    with db.tx() as cur:
+        for pid, qty in wanted.items():
+            p = products.get(pid)
+            name = p["name"] if p else None
+            if not p or not p["is_active"]:
+                failed.append({"product_id": pid, "name": name, "reason": "Sản phẩm không tồn tại hoặc đã ngừng kinh doanh"})
+                continue
+            current = in_cart.get(pid, 0)
+            available = (stock.get(str(pid)) or {}).get("available", 0)
+            room = min(MAX_QTY - current, available - current)
+            if room <= 0:
+                reason = (f"Mỗi sản phẩm tối đa {MAX_QTY} đơn vị trong giỏ" if current >= MAX_QTY else
+                          "Sản phẩm đã hết hàng" if available <= 0 else f"Chỉ còn {available} sản phẩm trong kho, giỏ đã có {current}")
+                failed.append({"product_id": pid, "name": name, "reason": reason})
+                continue
+            take = min(qty, room)
+            cur.execute(
+                "INSERT INTO cart_items (user_id, product_id, quantity, created_at, updated_at) VALUES (?, ?, ?, ?, ?) "
+                "ON CONFLICT (user_id, product_id) DO UPDATE SET quantity = excluded.quantity, updated_at = excluded.updated_at",
+                (uid, pid, current + take, ts, ts))
+            row = {"product_id": pid, "name": name, "quantity": take}
+            if take < qty:
+                adjusted.append({**row, "requested": qty, "added": take})
+            else:
+                added.append(row)
+    return {"added": added, "adjusted": adjusted, "failed": failed, "cart": build_cart(uid)}
 
 
 @app.put("/api/cart/items/<int:pid>")

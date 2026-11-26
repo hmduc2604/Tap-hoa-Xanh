@@ -1,0 +1,326 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "ai-service — hợp đồng dịch vụ",
+    "version": "1.0.0",
+    "description": "Tính năng AI: gợi ý mua kèm, trợ lý mua sắm và lập thực đơn (mô hình tự huấn luyện chạy cục bộ, hoặc API mô hình ngôn ngữ bên ngoài)",
+    "x-service-name": "ai-service",
+    "x-service-layer": "utility"
+  },
+  "servers": [
+    {
+      "url": "/"
+    }
+  ],
+  "tags": [
+    {
+      "name": "ai"
+    },
+    {
+      "name": "operations"
+    }
+  ],
+  "paths": {
+    "/api/ai/chat": {
+      "post": {
+        "operationId": "chat",
+        "summary": "Trợ lý mua sắm bằng ngôn ngữ tự nhiên (cần đăng nhập, giới hạn số lượt mỗi phút).",
+        "tags": [
+          "ai"
+        ],
+        "responses": {
+          "200": {
+            "description": "Thành công",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Tạo thành công",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "$ref": "#/components/responses/ClientError"
+          }
+        },
+        "description": "Gửi toàn bộ lịch sử hội thoại gần nhất trong `messages` (role user/assistant, mỗi tin tối đa 500 ký tự).\nPhản hồi gồm `reply`, `products` (thẻ sản phẩm thật, có thể kèm `suggest_qty`), `suggestions` (câu gợi ý bấm nhanh),\n`source` (local | ai | keyword), và `link` khi cần chỉ đường tới trang khác.",
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-access": "authenticated"
+      }
+    },
+    "/api/ai/meal-plan": {
+      "post": {
+        "operationId": "meal_plan",
+        "summary": "Lập thực đơn và danh sách đi chợ từ mô tả bữa ăn (cần đăng nhập, giới hạn số lượt mỗi phút).",
+        "tags": [
+          "ai"
+        ],
+        "responses": {
+          "200": {
+            "description": "Thành công",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Tạo thành công",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "$ref": "#/components/responses/ClientError"
+          }
+        },
+        "description": "Gửi `request` (mô tả bữa ăn, tối đa 300 ký tự, ví dụ \"bữa tối cho 4 người, khoảng 200k\"), tùy chọn `servings` (số người, 1-30),\n`budget` (ngân sách nguyên liệu chính, đồng) và `avoid` (danh sách tên món không muốn gặp lại, dùng cho \"gợi ý thực đơn khác\").\nThiếu số người hoặc ngân sách thì lấy từ câu mô tả.\nPhản hồi: `dishes` (các món kèm cách làm), `items` (danh sách đi chợ: thẻ sản phẩm thật, `qty` gợi ý, `pantry` = gia vị nhà thường có,\n`dishes` = món dùng nguyên liệu này), `main_total`/`total` (tạm tính không/có gia vị), `over_budget`, `missing` (nguyên liệu cửa hàng chưa bán),\n`source` (ai | local). Chỉ gợi ý, không tự thêm vào giỏ: khách bấm thêm bằng `POST /api/cart/items/bulk`.",
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-access": "authenticated"
+      }
+    },
+    "/api/ai/recommendations/{pid}": {
+      "get": {
+        "operationId": "recommendations",
+        "summary": "Sản phẩm thường được mua cùng.",
+        "tags": [
+          "ai"
+        ],
+        "responses": {
+          "200": {
+            "description": "Thành công",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "$ref": "#/components/responses/ClientError"
+          }
+        },
+        "description": "Tham số `cart` (tùy chọn, danh sách id cách nhau dấu phẩy): các món đang có trong giỏ để gợi ý theo cả giỏ hàng.\nTrường `source`: model (mô hình tự huấn luyện) | ai (API ngoài) | history | popular",
+        "parameters": [
+          {
+            "name": "pid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "security": [],
+        "x-access": "public"
+      }
+    },
+    "/api/ai/status": {
+      "get": {
+        "operationId": "status",
+        "summary": "Trạng thái tính năng AI và chất lượng mô hình đã huấn luyện (không lộ khóa API)",
+        "tags": [
+          "ai"
+        ],
+        "responses": {
+          "200": {
+            "description": "Thành công",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "$ref": "#/components/responses/ClientError"
+          }
+        },
+        "security": [],
+        "x-access": "public"
+      }
+    },
+    "/api/ai/usage": {
+      "get": {
+        "operationId": "usage",
+        "summary": "Thống kê số lượt gọi và token AI (để theo dõi chi phí)",
+        "tags": [
+          "ai"
+        ],
+        "responses": {
+          "200": {
+            "description": "Thành công",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "$ref": "#/components/responses/ClientError"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-access": "roles:admin",
+        "description": "Vai trò được phép: admin"
+      }
+    },
+    "/contract": {
+      "get": {
+        "operationId": "_contract",
+        "summary": "Hợp đồng dịch vụ OpenAPI 3 (?public=1 để bỏ các API nội bộ)",
+        "tags": [
+          "operations"
+        ],
+        "responses": {
+          "200": {
+            "description": "Thành công",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "$ref": "#/components/responses/ClientError"
+          }
+        },
+        "security": [],
+        "x-access": "public"
+      }
+    },
+    "/health": {
+      "get": {
+        "operationId": "_health",
+        "summary": "Kiểm tra trạng thái service và kết nối CSDL",
+        "tags": [
+          "operations"
+        ],
+        "responses": {
+          "200": {
+            "description": "Thành công",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "$ref": "#/components/responses/ClientError"
+          }
+        },
+        "security": [],
+        "x-access": "public"
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "JWT do auth-service phát hành, kiểm tra tại API Gateway"
+      },
+      "internalToken": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-Internal-Token",
+        "description": "Khóa nội bộ cho lời gọi service-to-service"
+      }
+    },
+    "schemas": {
+      "Error": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string",
+                "example": "OUT_OF_STOCK"
+              },
+              "message": {
+                "type": "string",
+                "example": "Không đủ hàng: Pate gan Hạ Long 150g (còn 0)"
+              },
+              "details": {}
+            },
+            "required": [
+              "code",
+              "message"
+            ]
+          }
+        }
+      }
+    },
+    "responses": {
+      "ClientError": {
+        "description": "Lỗi phía client (400, 401, 403, 404, 409...)",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      }
+    }
+  }
+}

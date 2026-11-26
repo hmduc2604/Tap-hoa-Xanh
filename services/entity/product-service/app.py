@@ -1,4 +1,5 @@
 """product-service: danh mục, sản phẩm (tìm kiếm không dấu, lọc, sắp xếp), đánh giá sản phẩm."""
+import json
 import os
 import sys
 
@@ -59,6 +60,10 @@ CREATE TABLE IF NOT EXISTS products (
     updated_at TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_products_category ON products(category_id);
+CREATE TABLE IF NOT EXISTS catalog_meta (
+    key TEXT PRIMARY KEY,
+    value TEXT NOT NULL
+);
 CREATE TABLE IF NOT EXISTS reviews (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     product_id INTEGER NOT NULL REFERENCES products(id) ON DELETE CASCADE,
@@ -459,31 +464,77 @@ def on_order_completed(data, event):
 
 # =================================================================== KHỞI TẠO
 def seed():
-    if not db.is_empty("categories"):
-        return
+    """Nạp dữ liệu mẫu từ common/seed_data.py.
+
+    - Cơ sở dữ liệu trống: tạo toàn bộ danh mục và sản phẩm (id 1..N đúng thứ tự trong seed_data).
+    - Đã có dữ liệu từ phiên bản trước: chỉ BỔ SUNG sản phẩm (và danh mục) mới theo SKU, không sửa hay xóa gì đang có.
+      Sản phẩm bị xóa trong trang quản trị chỉ bị ẩn (is_active = 0) nên SKU vẫn còn và không bị tạo lại.
+      Tồn kho của sản phẩm mới do inventory-service tự đồng bộ (reconcile_catalog).
+    """
     ts = now_str()
     with db.tx() as cur:
         cur.lock("seed")
-        if cur.scalar("SELECT COUNT(*) AS n FROM categories"):  # instance khác đã seed
+        cat_ids = {r["slug"]: r["id"] for r in cur.all("SELECT id, slug FROM categories")}
+        fresh = not cat_ids
+        have_sku = {r["sku"] for r in cur.all("SELECT sku FROM products")}
+        have_barcode = {r["barcode"] for r in cur.all("SELECT barcode FROM products WHERE barcode IS NOT NULL")}
+        todo = [p for p in PRODUCTS if p[1] not in have_sku]
+        if not todo and not fresh:
             return
-        cat_ids = []
+        needed = {p[0] for p in todo}
         for i, (name, icon, desc) in enumerate(CATEGORIES):
-            cat_ids.append(cur.insert(
-                "INSERT INTO categories (name, slug, description, icon, sort_order, is_active, created_at) VALUES (?, ?, ?, ?, ?, 1, ?)",
-                (name, slugify(name), desc, icon, i + 1, ts)))
-        for (ci, sku, barcode, name, brand, unit, price, sale, _stock, _min, desc) in PRODUCTS:
+            slug = slugify(name)
+            if slug not in cat_ids and (fresh or i in needed):
+                cat_ids[slug] = cur.insert(
+                    "INSERT INTO categories (name, slug, description, icon, sort_order, is_active, created_at) VALUES (?, ?, ?, ?, ?, 1, ?)",
+                    (name, slug, desc, icon, i + 1, ts))
+        for (ci, sku, barcode, name, brand, unit, price, sale, _stock, _min, desc) in todo:
             cur.insert(
                 """INSERT INTO products (sku, barcode, name, slug, category_id, brand, unit, price, sale_price, image_url,
                    description, is_active, search_text, created_at, updated_at)
                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, ?, 1, ?, ?, ?)""",
-                (sku, barcode, name, slugify(name), cat_ids[ci], brand, unit, price, sale, desc,
+                (sku, None if barcode in have_barcode else barcode, name, slugify(name),
+                 cat_ids[slugify(CATEGORIES[ci][0])], brand, unit, price, sale, desc,
                  search_text(name, brand, sku, barcode), ts, ts))
-    app.logger.info("Đã tạo %s danh mục, %s sản phẩm mẫu", len(CATEGORIES), len(PRODUCTS))
+    if fresh:
+        app.logger.info("Đã tạo %s danh mục, %s sản phẩm mẫu", len(CATEGORIES), len(PRODUCTS))
+    else:
+        app.logger.info("Đã bổ sung %s sản phẩm mới vào cơ sở dữ liệu hiện có", len(todo))
+
+
+def apply_images():
+    """Gắn ảnh sản phẩm từ common/catalog/images.json (nguồn: Open Food Facts, Wikimedia Commons; xem README).
+
+    Chỉ điền sản phẩm CHƯA có ảnh nên không ghi đè ảnh quản trị viên đã đặt, và chỉ chạy một lần cho mỗi phiên bản tệp ảnh
+    (dấu vết lưu trong bảng catalog_meta), nhờ vậy quản trị viên xóa ảnh một sản phẩm thì ảnh không tự quay lại.
+    """
+    path = os.path.join(os.path.dirname(os.path.abspath(sys.modules["common.seed_data"].__file__)), "catalog", "images.json")
+    try:
+        with open(path, encoding="utf-8") as fh:
+            data = json.load(fh)
+    except (OSError, ValueError):
+        return
+    images, version = data.get("images") or {}, str(data.get("version", ""))
+    if not images:
+        return
+    ts = now_str()
+    with db.tx() as cur:
+        cur.lock("seed_images")
+        row = cur.one("SELECT value FROM catalog_meta WHERE key = ?", ("images_version",))
+        if row and row["value"] == version:
+            return
+        for sku, url in images.items():
+            cur.execute("UPDATE products SET image_url = ?, updated_at = ? WHERE sku = ? AND (image_url IS NULL OR image_url = '')",
+                        (url, ts, sku))
+        cur.execute("DELETE FROM catalog_meta WHERE key = ?", ("images_version",))
+        cur.execute("INSERT INTO catalog_meta (key, value) VALUES (?, ?)", ("images_version", version))
+    app.logger.info("Đã gắn ảnh cho sản phẩm chưa có ảnh (%s ảnh trong tệp, phiên bản %s)", len(images), version)
 
 
 def create_app():
     db.init_schema(SCHEMA)
     seed()
+    apply_images()
     bus.init_app(app)
     register_service(app, "product", 8002)
     return app

@@ -1,0 +1,3 @@
+# Chỉ cần khi HUẤN LUYỆN lại mô hình. ai-service chạy suy luận bằng Python thuần nên KHÔNG cần các gói này trong Docker.
+numpy
+scikit-learn

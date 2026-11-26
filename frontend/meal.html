@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Thực đơn AI — Tạp Hóa Xanh</title>
+  <meta name="description" content="Nhập bữa ăn muốn nấu, AI lên món và danh sách đi chợ bằng hàng thật của cửa hàng, thêm cả giỏ chỉ một lần bấm.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍳</text></svg>">
+  <script src="/assets/js/theme.js"></script>
+  <link rel="stylesheet" href="/assets/css/base.css">
+  <link rel="stylesheet" href="/assets/css/store.css">
+</head>
+<body>
+  <main class="wrap page">
+    <div class="page-title"><h1>Thực đơn AI <span class="ai-tag">AI</span></h1><a href="/">Tiếp tục mua sắm</a></div>
+    <p class="meal-intro muted">Nói bạn muốn ăn gì, cho mấy người, khoảng bao nhiêu tiền. Mình lên món và danh sách đi chợ bằng hàng thật đang bán ở cửa hàng, bạn chỉnh lại rồi thêm cả danh sách vào giỏ chỉ một lần bấm.</p>
+
+    <section class="panel meal-form" aria-labelledby="meal-form-title">
+      <h2 id="meal-form-title" class="sr-only">Mô tả bữa ăn</h2>
+      <form id="meal-form" autocomplete="off">
+        <label class="field" for="meal-text">Bữa ăn bạn muốn nấu
+          <textarea id="meal-text" rows="2" maxlength="300" placeholder="Ví dụ: Bữa tối cho 4 người, có món canh, khoảng 200k"></textarea>
+        </label>
+        <div class="meal-opts">
+          <div class="field">
+            <span id="servings-label">Số người ăn</span>
+            <div class="qty" role="group" aria-labelledby="servings-label">
+              <button type="button" data-servings="-1" aria-label="Bớt một người">−</button>
+              <input type="number" id="meal-servings" value="2" min="1" max="30" aria-labelledby="servings-label">
+              <button type="button" data-servings="1" aria-label="Thêm một người">+</button>
+            </div>
+          </div>
+          <label class="field" for="meal-budget"><span>Ngân sách nguyên liệu <span class="hint">(tùy chọn)</span></span>
+            <input type="number" id="meal-budget" min="10000" max="10000000" step="10000" inputmode="numeric" placeholder="Không giới hạn (đồng)">
+          </label>
+          <button class="btn lg" type="submit" id="meal-go">Lên thực đơn</button>
+        </div>
+      </form>
+      <div class="meal-chips" id="meal-chips" aria-label="Gợi ý nhanh"></div>
+    </section>
+
+    <div id="meal-result" aria-live="polite"></div>
+  </main>
+  <script src="/assets/js/core.js"></script>
+  <script src="/assets/js/shop.js"></script>
+  <script src="/assets/js/meal.js"></script>
+  <script src="/assets/js/assistant.js"></script>
+</body>
+</html>
